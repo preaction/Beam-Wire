@@ -25,12 +25,42 @@ use Beam::Wire;
     );
 }
 
+{
+    package Buzz;
+    use Moo;
+    has aref => (
+        is      => 'ro',
+    );
+    sub BUILDARGS {
+        my ( $class, $aref ) = @_;
+        return { aref => $aref };
+    }
+}
+
+{
+    package Fizz;
+    use Moo;
+    has href => (
+        is      => 'ro',
+    );
+}
+
 my $wire = Beam::Wire->new( file => $FILE );
-isa_ok $wire->get('foo'), 'Foo';
-my $obj = $wire->get('foo');
-is refaddr $wire->get('foo'), refaddr $obj, 'container caches the object';
+my $foo = $wire->get('foo');
+isa_ok $foo, 'Foo';
+is refaddr $wire->get('foo'), refaddr $foo, 'container caches the object';
 isa_ok $wire->get('foo')->bar, 'Bar', 'container injects Bar object';
-is refaddr $wire->get('bar'), refaddr $wire->get('foo')->bar, 'container caches Bar object';
+is refaddr $wire->get('bar'), refaddr $foo->bar, 'container caches Bar object';
 is $wire->get('bar')->text, "Hello, World", 'container gives bar text value';
+
+my $buzz = $wire->get( 'buzz' );
+isa_ok $buzz, 'Buzz', 'container gets buzz object';
+is refaddr $wire->get('buzz'), refaddr $buzz, 'container caches the object';
+cmp_deeply $buzz->aref, [qw( one two three )], 'container gives array of arrayrefs';
+
+my $fizz = $wire->get( 'fizz' );
+isa_ok $fizz, 'Fizz', 'container gets Fizz object';
+is refaddr $wire->get('fizz'), refaddr $fizz, 'container caches the object';
+cmp_deeply $fizz->href, { one => 'two' }, 'container gives hashref';
 
 done_testing;
