@@ -10,3 +10,19 @@ inline_container:
                 class: Bar
                 args:
                     text: "Hello, World"
+service_container:
+    class: Beam::Wire
+    args:
+        services:
+            fizz: { ref: fizz }
+            buzz: { ref: buzz }
+
+fizz:
+    class: Foo
+    args:
+        bar: { ref: 'inline_container/bar' }
+
+buzz:
+    class: Bar
+    args:
+        text: "Hello, Buzz"

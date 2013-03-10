@@ -49,11 +49,18 @@ subtest 'container in file' => sub {
 
     my $foo = $wire->get( 'inline_container/foo' );
     isa_ok $foo, 'Foo';
-    my $obj = $wire->get('inline_container/foo');
-    is refaddr $foo, refaddr $obj, 'container caches the object';
+    is refaddr $foo, refaddr $wire->get('inline_container/foo'), 'container caches the object';
     isa_ok $foo->bar, 'Bar', 'container injects Bar object';
     is refaddr $wire->get('inline_container/bar'), refaddr $foo->bar, 'container caches Bar object';
     is $wire->get('inline_container/bar')->text, "Hello, World", 'container gives bar text value';
+
+    my $fizz = $wire->get( 'service_container/fizz' );
+    isa_ok $fizz, 'Foo';
+    is refaddr $fizz, refaddr $wire->get('service_container/fizz'), 'container caches the object';
+    isa_ok $fizz->bar, 'Bar', 'container injects Bar object';
+    is refaddr $fizz->bar, refaddr $foo->bar, 'fizz takes the same bar as foo';
+    is refaddr $wire->get('inline_container/bar'), refaddr $fizz->bar, 'container caches Bar object';
+    is $wire->get('service_container/buzz')->text, "Hello, Buzz", 'container gives bar text value';
 };
 
 subtest 'set inside subcontainer' => sub {
