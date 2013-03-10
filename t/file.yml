@@ -1,0 +1,8 @@
+foo:
+    class: Foo
+    args:
+        bar: { ref: bar }
+bar:
+    class: Bar
+    args:
+        text: "Hello, World"
