@@ -90,6 +90,25 @@ Using the array of arguments, you can give arrayrefs or hashrefs:
             -   driver: Memory
                 max_size: 16MB
 
+# INNER CONTAINERS
 
+Beam::Wire objects can hold other Beam::Wire objects!
 
+    inner:
+        class: Beam::Wire
+        args:
+            config:
+                dbh:
+                    class: DBI
+                    args:
+                        - 'dbi:mysql:dbname'
+                cache:
+                    class: CHI
+                    args:
+                        driver: Memory
+                        max_size: 16MB
 
+Inner containers' contents can be reached from outer containers by separating
+the names with a slash character:
+
+    my $dbh = $wire->get( 'inner/dbh' );
