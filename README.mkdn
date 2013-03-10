@@ -1,0 +1,95 @@
+# NAME
+
+Beam::Wire - A Dependency Injection Container
+
+# SYNOPSIS
+
+    # wire.yml
+    dbh:
+        class: 'DBI'
+        args:
+            - 'dbi:mysql:dbname'
+            - {
+                PrintError: 1
+              }
+    cache:
+        class: 'CHI'
+        args:
+            driver: 'DBI'
+            dbh: { ref: 'dbh' }
+
+    # myscript.pl
+    use Beam::Wire;
+    my $wire  = Beam::Wire->new( file => 'wire.yml' );
+    my $dbh   = $wire->get( 'dbh' );
+    my $cache = $wire->get( 'cache' );
+
+    $wire->set( 'dbh', DBI->new( 'dbi:pgsql:dbname' ) );
+
+# DESCRIPTION
+
+Beam::Wire is a dependency injection container.
+
+TODO: Explain what a DI container does and why you want it
+
+# ATTRIBUTES
+
+## file
+
+Read the list of services from the given file. The file is described below in the [FILE](http://search.cpan.org/perldoc?FILE) section.
+
+# METHODS
+
+## new
+
+Create a new container.
+
+# FILE
+
+Beam::Wire can read a YAML file to fill a container with services. The file should be a single hashref.
+The keys will be the service names.
+
+# SERVICE ATTRIBUTES
+
+## class
+
+The class to instantiate. The class will be loaded and the `new` method called.
+
+## args
+
+The arguments to the `new` method. This can be either an array or a hash, like so:
+
+    # array
+    dbh: 
+        class: DBI
+        args:
+            - 'dbi:mysql:dbname'
+
+    # hash
+    cache:
+        class: CHI
+        args:
+            driver: Memory
+            max_size: 16MB
+
+Using the array of arguments, you can give arrayrefs or hashrefs:
+
+    # arrayref of arrayrefs
+    names:
+        class: 'Set::CrossProduct'
+        args:
+            -
+                - [ 'Foo', 'Barkowictz' ]
+                - [ 'Bar', 'Foosmith' ]
+                - [ 'Baz', 'Bazleton' ]
+
+    # hashref
+    cache:
+        class: CHI
+        args:
+            -   driver: Memory
+                max_size: 16MB
+
+
+
+
