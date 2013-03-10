@@ -1,0 +1,12 @@
+inline_container:
+    class: Beam::Wire
+    args:
+        config:
+            foo:
+                class: Foo
+                args:
+                    bar: { ref: bar }
+            bar:
+                class: Bar
+                args:
+                    text: "Hello, World"

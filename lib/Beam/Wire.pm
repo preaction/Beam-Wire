@@ -28,12 +28,22 @@ has services => (
 
 sub get {
     my ( $self, $name ) = @_;
+    if ( $name =~ '/' ) {
+        my ( $container_name, $service ) = split m{/}, $name, 2;
+        my $container = $self->services->{$container_name}
+                      ||= $self->create_service( %{ $self->config->{$container_name} } );
+        return $container->get( $service );
+    }
     return $self->services->{$name} 
         ||= $self->create_service( %{ $self->config->{$name} } );
 }
 
 sub set {
     my ( $self, $name, $service ) = @_;
+    if ( $name =~ '/' ) {
+        my ( $container_name, $service_name ) = split m{/}, $name, 2;
+        return $self->get( $container_name )->set( $service_name, $service );
+    }
     $self->services->{$name} = $service;
 }
 
@@ -52,7 +62,18 @@ sub create_service {
             @args = $service_info{args};
         }
     }
-    @args = $self->find_refs( @args );
+    # Subcontainers cannot scan for refs in their configs
+    if ( $service_info{class}->isa( 'Beam::Wire' ) ) {
+        my %args = @args;
+        my $config = delete $args{config};
+        @args = $self->find_refs( %args );
+        if ( $config ) {
+            push @args, config => $config;
+        }
+    }
+    else {
+        @args = $self->find_refs( @args );
+    }
     return $service_info{class}->new( @args );
 }
 
