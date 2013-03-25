@@ -5,7 +5,7 @@ use File::Spec::Functions qw( catfile );
 use Scalar::Util qw( refaddr );
 
 my $SINGLE_FILE = catfile( $Bin, 'file.yml' );
-my $DEEP_FILE   = catfile( $Bin, 'subwire.yml' );
+my $DEEP_FILE   = catfile( $Bin, 'inner.yml' );
 
 use Beam::Wire;
 
