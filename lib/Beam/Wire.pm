@@ -60,6 +60,7 @@ sub set {
 
 sub parse_args {
     my ( $self, %service_info ) = @_;
+    return if not exists $service_info{args};
     my @args;
     if ( ref $service_info{args} eq 'ARRAY' ) {
         @args = @{$service_info{args}};
