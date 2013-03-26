@@ -38,6 +38,19 @@ TODO: Explain what a DI container does and why you want it
 
 Read the list of services from the given file. The file is described below in the [FILE](http://search.cpan.org/perldoc?FILE) section.
 
+## dir
+
+A directory to use when searching for inner container files. Defaults to the directory that contains
+the `file`.
+
+## config
+
+A hashref of service configurations. This is normally filled in by reading the [FILE](http://search.cpan.org/perldoc?FILE).
+
+## services
+
+A hashref of services. If you have any services already built, add them here.
+
 # METHODS
 
 ## new
@@ -112,3 +125,36 @@ Inner containers' contents can be reached from outer containers by separating
 the names with a slash character:
 
     my $dbh = $wire->get( 'inner/dbh' );
+
+## INNER FILES
+
+    inner:
+        class: Beam::Wire
+        args:
+            file: inner.yml
+
+Inner containers can be created by reading files just like the main container. If the 
+`file` attribute is relative, the parent's `dir` attribute will be added:
+
+    # share/parent.yml
+    inner:
+        class: Beam::Wire
+        args:
+            file: inner.yml
+
+    # share/inner.yml
+    dbh:
+        class: DBI
+        args:
+            - 'dbi:sqlite:data.db'
+
+    # myscript.pl
+    use Beam::Wire;
+    my $container = Beam::Wire->new(
+        file => 'share/parent.yml',
+    );
+    my $dbh = $container->get( 'inner/dbh' );
+
+If more control is needed, you can set the [dir](http://search.cpan.org/perldoc?dir) attribute on the parent container.
+
+If even more control is needed, you can make a subclass of Beam::Wire.
