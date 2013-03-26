@@ -57,7 +57,7 @@ sub set {
     $self->services->{$name} = $service;
 }
 
-sub create_service {
+sub parse_args {
     my ( $self, %service_info ) = @_;
     my @args;
     if ( ref $service_info{args} eq 'ARRAY' ) {
@@ -86,6 +86,12 @@ sub create_service {
     else {
         @args = $self->find_refs( @args );
     }
+    return @args;
+}
+
+sub create_service {
+    my ( $self, %service_info ) = @_;
+    my @args = $self->parse_args( %service_info );
     return $service_info{class}->new( @args );
 }
 
