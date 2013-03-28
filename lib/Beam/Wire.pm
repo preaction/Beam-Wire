@@ -95,7 +95,8 @@ sub create_service {
     my ( $self, %service_info ) = @_;
     my @args = $self->parse_args( %service_info );
     load_class( $service_info{class} );
-    return $service_info{class}->new( @args );
+    my $method = $service_info{method} || "new";
+    return $service_info{class}->$method( @args );
 }
 
 sub find_refs {
@@ -136,6 +137,7 @@ Beam::Wire - A Dependency Injection Container
     # wire.yml
     dbh:
         class: 'DBI'
+        method: connect
         args:
             - 'dbi:mysql:dbname'
             - {
@@ -195,15 +197,20 @@ The keys will be the service names.
 
 =head2 class
 
-The class to instantiate. The class will be loaded and the C<new> method called.
+The class to instantiate. The class will be loaded and the C<method> (below) method called.
+
+=head2 method
+
+The class method to call to construct the object. Defaults to C<new>.
 
 =head2 args
 
-The arguments to the C<new> method. This can be either an array or a hash, like so:
+The arguments to the C<method> method. This can be either an array or a hash, like so:
 
     # array
     dbh: 
         class: DBI
+        method: connect
         args:
             - 'dbi:mysql:dbname'
 
@@ -242,6 +249,7 @@ Beam::Wire objects can hold other Beam::Wire objects!
             config:
                 dbh:
                     class: DBI
+                    method: connect
                     args:
                         - 'dbi:mysql:dbname'
                 cache:
@@ -274,6 +282,7 @@ C<file> attribute is relative, the parent's C<dir> attribute will be added:
     # share/inner.yml
     dbh:
         class: DBI
+        method: connect
         args:
             - 'dbi:sqlite:data.db'
 
