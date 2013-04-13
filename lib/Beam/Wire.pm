@@ -10,6 +10,7 @@ use warnings;
 use Moo;
 use Config::Any;
 use Class::Load qw( load_class );
+use Data::DPath qw ( dpath );
 use File::Basename qw( dirname );
 use File::Spec::Functions qw( catfile );
 use MooX::Types::MooseLike::Base qw( :all );
@@ -355,12 +356,21 @@ sub find_refs {
     my @out;
     for my $arg ( @args ) {
         if ( ref $arg eq 'HASH' ) {
-            # Detect references
+            # detect references
             my @keys = keys %$arg;
-            if ( @keys == 1 && $keys[0] eq 'ref' ) {
+            if ( @keys and $keys[0] eq 'ref' ) {
+                # found a service ref
+                my @serv;
                 my $name = $arg->{ref};
-                # Found a ref!
-                push @out, $self->get( $name );
+                if ( $arg->{path} ) {
+                    # locate foreign service data
+                    my $conf = $self->config->{$name};
+                    @serv = dpath($arg->{path})->match($conf);
+                }
+                else {
+                    $serv[0] = $self->get( $name );
+                }
+                push @out, @serv;
             }
             else {
                 push @out, { $self->find_refs( %$arg ) };

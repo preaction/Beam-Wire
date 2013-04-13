@@ -25,6 +25,7 @@ my %WriteMakefileArgs = (
   "PREREQ_PM" => {
     "Class::Load" => 0,
     "Config::Any" => "0.23",
+    "Data::DPath" => "0.49",
     "Moo" => 0,
     "MooX::Types::MooseLike" => 0,
     "YAML::Any" => "0.84"
