@@ -215,9 +215,8 @@ the [file](http://search.cpan.org/perldoc?file) attribute.
 
 ## config
 
-The config attribute contains a hashref of service configurations. This is
-normally filled in by parsing the data within the file specified by the [file](http://search.cpan.org/perldoc?file)
-attribute.
+The config attribute contains a hashref of service configurations. This data is
+loaded by [Config::Any](http://search.cpan.org/perldoc?Config::Any) using the file specified by the [file](http://search.cpan.org/perldoc?file) attribute.
 
 ## services
 

@@ -203,8 +203,8 @@ ATTRIBUTES
 
   config
     The config attribute contains a hashref of service configurations. This
-    is normally filled in by parsing the data within the file specified by
-    the file attribute.
+    data is loaded by Config::Any using the file specified by the file
+    attribute.
 
   services
     A hashref of services. If you have any services already built, add them

@@ -8,7 +8,7 @@ use warnings;
 # VERSION
 
 use Moo;
-
+use Config::Any;
 use Class::Load qw( load_class );
 use File::Basename qw( dirname );
 use File::Spec::Functions qw( catfile );
@@ -242,18 +242,25 @@ has dir => (
 
 =attribute config
 
-The config attribute contains a hashref of service configurations. This is
-normally filled in by parsing the data within the file specified by the L<file>
-attribute.
+The config attribute contains a hashref of service configurations. This data is
+loaded by L<Config::Any> using the file specified by the L<file> attribute.
 
 =cut
 
 has config => (
-    is          => 'ro',
-    isa         => HashRef,
-    lazy        => 1,
-    default     => sub { LoadFile( $_[0]->file ); },
+    is      => 'ro',
+    isa     => HashRef,
+    lazy    => 1,
+    builder => 1
 );
+
+sub _build_config {
+    my ( $self ) = @_; local $Config::Any::YAML::NO_YAML_XS_WARNING = 1;
+    my $loader = Config::Any->load_files( {
+        files  => [$self->file], use_ext => 1, flatten_to_hash => 1
+    } );
+    return "HASH" eq ref $loader ? (values(%{$loader}))[0] : {};
+}
 
 =attribute services
 
@@ -319,8 +326,8 @@ sub parse_args {
         my %args = @args;
         # Subcontainers cannot scan for refs in their configs
         my $config = delete $args{config};
-        # Relative subcontainer files should be from the current container's
-        # directory
+        # Relative subcontainer files should be from the current
+        # container's directory
         if ( exists $args{file} && $args{file} !~ m{^/} ) {
             $args{file} = catfile( $self->dir, $args{file} );
         }
