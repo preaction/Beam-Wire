@@ -189,6 +189,38 @@ OVERVIEW
     container. If even more control is needed, you can make a subclass of
     Beam::Wire.
 
+   Service/Configuration References
+        chi:
+            class: CHI
+            args:
+                driver: 'DBI'
+                dbh: { ref: 'dbh' }
+        dbh:
+            class: DBI
+            method: connect
+            args:
+                - { ref: dsn }
+                - { ref: usr }
+                - { ref: pwd }
+        dsn:
+            value: "dbi:SQLite:memory:"
+        usr:
+            value: "admin"
+        pwd:
+            value: "s3cret"
+
+    The reuse of service and configuration containers as arguments for other
+    services is encouraged so we have provided a means of referencing those
+    objects within your configuration. A reference is an arugment (a service
+    argument) in the form of a hashref with a "ref" key whose value is the
+    name of another service. Optionally, this hashref may contain a "path"
+    key whose value is a Data::DPath search string which should return the
+    found data structure from within the referenced service.
+
+    It is also possible to use raw-values as services, this is done by
+    configuring a service using a single key/value pair with a "value" key
+    whose value contains the raw-value you wish to reuse.
+
 ATTRIBUTES
   file
     The file attribute contains the file path of the file where Beam::Wire
