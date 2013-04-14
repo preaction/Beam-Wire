@@ -209,6 +209,39 @@ added:
 If more control is needed, you can set the L<dir> attribute on the parent
 container. If even more control is needed, you can make a subclass of Beam::Wire.
 
+=head3 Service/Configuration References
+
+    chi:
+        class: CHI
+        args:
+            driver: 'DBI'
+            dbh: { ref: 'dbh' }
+    dbh:
+        class: DBI
+        method: connect
+        args:
+            - { ref: dsn }
+            - { ref: usr }
+            - { ref: pwd }
+    dsn:
+        value: "dbi:SQLite:memory:"
+    usr:
+        value: "admin"
+    pwd:
+        value: "s3cret"
+
+The reuse of service and configuration containers as arguments for other
+services is encouraged so we have provided a means of referencing those
+objects within your configuration. A reference is an arugment (a service
+argument) in the form of a hashref with a C<ref> key whose value is
+the name of another service. Optionally, this hashref may contain a C<path>
+key whose value is a L<Data::DPath> search string which should return the found
+data structure from within the referenced service.
+
+It is also possible to use raw-values as services, this is done by configuring a
+service using a single key/value pair with a C<value> key whose value contains
+the raw-value you wish to reuse.
+
 =cut
 
 =attribute file
@@ -359,17 +392,29 @@ sub find_refs {
             # detect references
             my @keys = keys %$arg;
             if ( @keys and $keys[0] eq 'ref' ) {
-                # found a service ref
+                # resolve service ref
                 my @serv;
                 my $name = $arg->{ref};
+                # resolve service ref w/path
                 if ( $arg->{path} ) {
                     # locate foreign service data
                     my $conf = $self->config->{$name};
                     @serv = dpath($arg->{path})->match($conf);
                 }
+                # resolve ref-only
                 else {
-                    $serv[0] = $self->get( $name );
+                    # locate foreign service data
+                    my $conf = $self->config->{$name};
+                    if ($conf) {
+                        # process raw values
+                        if (1 == keys %$conf && $conf->{value}) {
+                            $serv[0] = $conf->{value};
+                        }
+                    }
+                    $serv[0] ||= $self->get( $name );
                 }
+
+                # return service(s)
                 push @out, @serv;
             }
             else {
