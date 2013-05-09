@@ -20,12 +20,15 @@ subtest 'load module from raw values' => sub {
         },
     );
 
+    my $greeting;
+    lives_ok { $greeting = $wire->get( 'greeting' ) };
+    is ref $greeting, '', 'got a simple scalar';
+    is $greeting, 'Hello, World';
+
     my $foo;
     lives_ok { $foo = $wire->get( 'foo' ) };
     isa_ok $foo, 'Foo';
     is $foo->foo, 'Hello, World';
-
-    # NEED MORE TESTS !!!
 };
 
 done_testing;

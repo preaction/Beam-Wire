@@ -379,6 +379,9 @@ sub parse_args {
 sub create_service {
     my ( $self, %service_info ) = @_;
     my @args = $self->parse_args( %service_info );
+    if ( $service_info{value} ) {
+        return $service_info{value};
+    }
     load_class( $service_info{class} );
     my $method = $service_info{method} || "new";
     return $service_info{class}->$method( @args );
@@ -393,29 +396,21 @@ sub find_refs {
             my @keys = keys %$arg;
             if ( @keys and $keys[0] eq 'ref' ) {
                 # resolve service ref
-                my @serv;
+                my @ref;
                 my $name = $arg->{ref};
+                my $service = $self->get( $name );
                 # resolve service ref w/path
                 if ( $arg->{path} ) {
                     # locate foreign service data
                     my $conf = $self->config->{$name};
-                    @serv = dpath($arg->{path})->match($conf);
+                    @ref = dpath($arg->{path})->match($service);
                 }
-                # resolve ref-only
                 else {
-                    # locate foreign service data
-                    my $conf = $self->config->{$name};
-                    if ($conf) {
-                        # process raw values
-                        if (1 == keys %$conf && $conf->{value}) {
-                            $serv[0] = $conf->{value};
-                        }
-                    }
-                    $serv[0] ||= $self->get( $name );
+                    @ref = $service;
                 }
 
                 # return service(s)
-                push @out, @serv;
+                push @out, @ref;
             }
             else {
                 push @out, { $self->find_refs( %$arg ) };
