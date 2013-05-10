@@ -405,6 +405,12 @@ sub find_refs {
                     my $conf = $self->config->{$name};
                     @ref = dpath($arg->{path})->match($service);
                 }
+                elsif ( my $method = $arg->{method} ) {
+                    my @args = !$arg->{args}                ? ()
+                             : ref $arg->{args} eq 'ARRAY'  ? @{ $arg->{args} } 
+                             : $arg->{args};
+                    @ref = $service->$method( @args );
+                }
                 else {
                     @ref = $service;
                 }
