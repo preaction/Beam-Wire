@@ -5,18 +5,6 @@ use File::Spec::Functions qw( catdir );
 use lib catdir( $Bin , 'lib' );
 use Beam::Wire;
 
-{ package Greeting;
-    use Moo;
-    has hello => ( is => 'ro' );
-    has default => ( is => 'ro' );
-    sub greet {
-        my ( $self, @who ) = @_;
-        @who = $self->default if !@who;
-        return join ". ", map { sprintf "%s, %s", $self->hello, $_ } @who;
-    }
-}
-
-
 my $wire = Beam::Wire->new(
     config => {
         foo => {
