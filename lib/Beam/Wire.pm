@@ -149,6 +149,37 @@ Using the array of arguments, you can give arrayrefs or hashrefs:
             -   driver: Memory
                 max_size: 16MB
 
+=head4 extends
+
+Inherit and override attributes from another service. 
+
+    dbh:
+        class: DBI
+        method: connect
+        args:
+            - 'dbi:mysql:dbname'
+    dbh_dev:
+        extends: 'dbh'
+        args:
+            - 'dbi:mysql:devdb'
+
+Hash C<args> will be merged seperately, like so:
+
+    activemq:
+        class: My::ActiveMQ
+        args:
+            host: example.com
+            port: 61312
+            user: root
+            password: 12345
+    activemq_dev:
+        extends: 'activemq'
+        args:
+            host: dev.example.com
+
+C<activemq_dev> will get the C<port>, C<user>, and C<password> arguments
+from the base service C<activemq>.
+
 =head3 Inner Containers
 
 Beam::Wire objects can hold other Beam::Wire objects!
