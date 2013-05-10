@@ -63,4 +63,9 @@ isa_ok $fizz, 'Fizz', 'container gets Fizz object';
 is refaddr $wire->get('fizz'), refaddr $fizz, 'container caches the object';
 cmp_deeply $fizz->href, { one => 'two' }, 'container gives hashref';
 
+my $fizzbuzz = $wire->get( 'fizzbuzz' );
+isa_ok $fizzbuzz, 'Buzz', 'container gets buzz object';
+is refaddr $wire->get('fizzbuzz'), refaddr $fizzbuzz, 'container caches the object';
+cmp_deeply $fizzbuzz->aref, "Hello", 'container gives simple scalar';
+
 done_testing;
