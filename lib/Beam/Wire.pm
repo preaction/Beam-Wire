@@ -378,6 +378,8 @@ sub parse_args {
 
 sub create_service {
     my ( $self, %service_info ) = @_;
+    # Compose the parent ref into the copy, in case the parent changes
+    %service_info = $self->merge_config( %service_info );
     my @args = $self->parse_args( %service_info );
     if ( $service_info{value} ) {
         return $service_info{value};
@@ -385,6 +387,23 @@ sub create_service {
     load_class( $service_info{class} );
     my $method = $service_info{method} || "new";
     return $service_info{class}->$method( @args );
+}
+
+sub merge_config {
+    my ( $self, %service_info ) = @_;
+    if ( $service_info{ extends } ) {
+        my %base_config = %{ $self->config->{ $service_info{extends} } };
+        # Merge the args separately, to be a bit nicer about hashes of arguments
+        my $args;
+        if ( ref $service_info{args} eq 'HASH' && ref $base_config{args} eq 'HASH' ) {
+            $args = { %{ delete $base_config{args} }, %{ delete $service_info{args} } };
+        }
+        %service_info = ( $self->merge_config( %base_config ), %service_info );
+        if ( $args ) {
+            $service_info{args} = $args;
+        }
+    }
+    return %service_info;
 }
 
 sub find_refs {
