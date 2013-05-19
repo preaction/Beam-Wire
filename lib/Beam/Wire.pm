@@ -14,7 +14,6 @@ use Data::DPath qw ( dpath );
 use File::Basename qw( dirname );
 use File::Spec::Functions qw( catfile );
 use MooX::Types::MooseLike::Base qw( :all );
-use YAML::Any qw( LoadFile );
 
 =head1 SYNOPSIS
 
