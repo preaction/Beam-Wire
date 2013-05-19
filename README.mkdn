@@ -4,7 +4,7 @@ Beam::Wire - A Dependency Injection Container
 
 # VERSION
 
-version 0.011
+version 0.012
 
 # SYNOPSIS
 
