@@ -23,7 +23,7 @@ my %module_build_args = (
     "Al Newkirk <anewkirk\@ana.io>"
   ],
   "dist_name" => "Beam-Wire",
-  "dist_version" => "0.010",
+  "dist_version" => "0.011",
   "license" => "perl",
   "module_name" => "Beam::Wire",
   "recommends" => {},
