@@ -12,9 +12,11 @@ my %WriteMakefileArgs = (
   "ABSTRACT" => "A Dependency Injection Container",
   "AUTHOR" => "Doug Bell <preaction\@cpan.org>, Al Newkirk <anewkirk\@ana.io>",
   "BUILD_REQUIRES" => {
+    "JSON" => 0,
     "Module::Build" => "0.3601",
     "Test::Compile" => 0,
-    "Test::Most" => 0
+    "Test::Most" => 0,
+    "YAML" => 0
   },
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.30",
@@ -29,10 +31,9 @@ my %WriteMakefileArgs = (
     "Config::Any" => "0.23",
     "Data::DPath" => "0.49",
     "Moo" => 0,
-    "MooX::Types::MooseLike" => 0,
-    "YAML::Any" => "0.84"
+    "MooX::Types::MooseLike" => 0
   },
-  "VERSION" => "0.009",
+  "VERSION" => "0.010",
   "test" => {
     "TESTS" => "t/*.t"
   }
