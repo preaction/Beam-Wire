@@ -30,7 +30,7 @@ subtest 'load module from refs' => sub {
     my $foo;
     lives_ok { $foo = $wire->get( 'foo' ) };
     isa_ok $foo, 'Foo';
-    is $foo->foo, 'Hello, World';
+    is $foo->foo, 'Hello, World' or diag explain $foo->foo;
 
     # NEED MORE TESTS !!!
 };

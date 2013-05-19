@@ -69,28 +69,28 @@ subtest 'method with no arguments' => sub {
     my $svc;
     lives_ok { $svc = $wire->get( 'foo' ) };
     isa_ok $svc, 'Foo';
-    is $svc->foo, 'Hello, World';
+    is $svc->foo, 'Hello, World' or diag explain $svc->foo;
 };
 
 subtest 'method with one argument' => sub {
     my $svc;
     lives_ok { $svc = $wire->get( 'bar' ) };
     isa_ok $svc, 'Foo';
-    is $svc->foo, 'Hello, Bar';
+    is $svc->foo, 'Hello, Bar' or diag explain $svc->foo;
 };
 
 subtest 'method with arrayref of arguments' => sub {
     my $svc;
     lives_ok { $svc = $wire->get( 'foo_and_bar' ) };
     isa_ok $svc, 'Foo';
-    is $svc->foo, 'Hello, Foo. Hello, Bar';
+    is $svc->foo, 'Hello, Foo. Hello, Bar' or diag explain $svc->foo;
 };
 
 subtest 'a different reference' => sub {
     my $svc;
     lives_ok { $svc = $wire->get( 'francais' ) };
     isa_ok $svc, 'Foo';
-    is $svc->foo, 'Bonjour, Foo';
+    is $svc->foo, 'Bonjour, Foo' or diag explain $svc->foo;
 };
 
 done_testing;
