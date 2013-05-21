@@ -4,7 +4,7 @@ Beam::Wire - A Dependency Injection Container
 
 # VERSION
 
-version 0.012
+version 0.013
 
 # SYNOPSIS
 
@@ -169,6 +169,32 @@ Hash `args` will be merged seperately, like so:
 
 `activemq_dev` will get the `port`, `user`, and `password` arguments
 from the base service `activemq`.
+
+#### lifecycle
+
+Control how your service is created. The default value, `singleton`, will cache
+the resulting service and return it for every call to `get()`. The other
+value, `factory`, will create a new instance of the service every time:
+
+    today:
+        class: DateTime
+        method: today
+        lifecycle: factory
+        args:
+            time_zone: US/Chicago
+    report_yesterday:
+        class: My::Report
+        args:
+            date: { ref: today, method: add, args: [ "days", "-1" ] }
+    report_today:
+        class: My::Report
+        args:
+            date: { ref: today }
+
+`DateTime-`add> modifies the object and returns the newly-modified object (to
+allow for method chaining.) Without `lifecycle: factory`, the `today` service
+would become yesterday, making it hard to know what `report_today` would
+report on.
 
 ### Inner Containers
 
