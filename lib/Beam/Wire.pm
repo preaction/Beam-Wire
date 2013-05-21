@@ -179,6 +179,32 @@ Hash C<args> will be merged seperately, like so:
 C<activemq_dev> will get the C<port>, C<user>, and C<password> arguments
 from the base service C<activemq>.
 
+=head4 lifecycle
+
+Control how your service is created. The default value, C<singleton>, will cache
+the resulting service and return it for every call to C<get()>. The other
+value, C<factory>, will create a new instance of the service every time:
+
+    today:
+        class: DateTime
+        method: today
+        lifecycle: factory
+        args:
+            time_zone: US/Chicago
+    report_yesterday:
+        class: My::Report
+        args:
+            date: { ref: today, method: add, args: [ "days", "-1" ] }
+    report_today:
+        class: My::Report
+        args:
+            date: { ref: today }
+
+C<DateTime->add> modifies the object and returns the newly-modified object (to
+allow for method chaining.) Without C<lifecycle: factory>, the C<today> service
+would become yesterday, making it hard to know what C<report_today> would
+report on.
+
 =head3 Inner Containers
 
 Beam::Wire objects can hold other Beam::Wire objects!
@@ -353,8 +379,15 @@ sub get {
         ;
         return $container->get( $service );
     }
-    return $self->services->{$name}
-        ||= $self->create_service( %{ $self->config->{$name} } );
+    my $service = $self->services->{$name};
+    if ( !$service ) {
+        my %config  = %{ $self->config->{$name} };
+        $service = $self->create_service( %config );
+        if ( !$config{lifecycle} || lc $config{lifecycle} eq 'singleton' ) {
+            $self->services->{$name} = $service;
+        }
+    }
+    return $service;
 }
 
 =method set
