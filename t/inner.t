@@ -97,5 +97,17 @@ subtest 'inner container file' => sub {
     is $wire->get('container/bar')->text, "Hello, World", 'container gives bar text value';
 };
 
+subtest 'inner container get() overrides' => sub {
+    my $wire = Beam::Wire->new(
+        file => $INNER_FILE,
+    );
+
+	my $foo = $wire->get( 'container/foo' );
+	my $oof = $wire->get( 'container/foo', args => { bar => Bar->new( text => 'New World' ) } );
+	isnt refaddr $oof, refaddr $foo, 'get() with overrides creates a new object';
+	isnt refaddr $oof, refaddr $wire->get('container/foo'), 'get() with overrides does not save the object';
+	isnt refaddr $oof->bar, refaddr $foo->bar, 'our override gave our new object a new bar';
+};
+
 
 done_testing;

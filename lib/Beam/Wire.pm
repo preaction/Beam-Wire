@@ -364,20 +364,44 @@ has services => (
     default => sub { {} },
 );
 
-=method get
+=method get( name, [ overrides ] )
 
-The get method resolves and returns the specified service.
+The get method resolves and returns the service named C<name>.
+
+C<overrides> may be a list of name-value pairs. If specified, get()
+will create an anonymous service that extends the C<name> service
+with the given config overrides:
+
+    # test.pl
+    use Beam::Wire;
+    my $wire = Beam::Wire->new(
+        config => {
+            foo => {
+                args => {
+                    text => 'Hello, World!',
+                },
+            },
+        },
+    );
+    my $foo = $wire->get( 'foo', args => { text => 'Hello, Chicago!' } );
+    print $foo; # prints "Hello, Chicago!"
+
+This allows you to create factories out of any service, overriding service
+configuration at run-time.
 
 =cut
 
 sub get {
-    my ( $self, $name ) = @_;
+    my ( $self, $name, %override ) = @_;
     if ( $name =~ '/' ) {
         my ( $container_name, $service ) = split m{/}, $name, 2;
         my $container = $self->services->{$container_name} ||=
             $self->create_service( %{ $self->config->{$container_name} } )
         ;
-        return $container->get( $service );
+        return $container->get( $service, %override );
+    }
+    if ( keys %override ) {
+        return $self->create_service( %override, extends => $name );
     }
     my $service = $self->services->{$name};
     if ( !$service ) {
