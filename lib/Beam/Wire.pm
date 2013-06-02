@@ -14,6 +14,7 @@ use Data::DPath qw ( dpath );
 use File::Basename qw( dirname );
 use File::Spec::Functions qw( catfile );
 use MooX::Types::MooseLike::Base qw( :all );
+use List::MoreUtils qw( all );
 
 =head1 SYNOPSIS
 
@@ -522,7 +523,7 @@ sub find_refs {
         if ( ref $arg eq 'HASH' ) {
             # detect references
             my @keys = keys %$arg;
-            if ( @keys and $keys[0] eq $meta{ref} ) {
+            if ( $arg->{ $meta{ref} } and all { /^\Q$prefix/ } @keys ) {
                 # resolve service ref
                 my @ref;
                 my $name = $arg->{ $meta{ref} };
