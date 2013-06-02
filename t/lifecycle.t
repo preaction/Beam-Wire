@@ -16,7 +16,7 @@ subtest 'singleton lifecycle' => sub {
             bar => {
                 class => 'Foo',
                 args => {
-                    foo => { ref => 'foo' },
+                    foo => { '$ref' => 'foo' },
                 },
             },
         },
@@ -40,7 +40,7 @@ subtest 'factory lifecycle' => sub {
             bar => {
                 class => 'Foo',
                 args => {
-                    foo => { ref => 'foo' },
+                    foo => { '$ref' => 'foo' },
                 },
             },
         },
@@ -64,7 +64,7 @@ subtest 'default lifecycle is singleton' => sub {
             bar => {
                 class => 'Foo',
                 args => {
-                    foo => { ref => 'foo' },
+                    foo => { '$ref' => 'foo' },
                 },
             },
         },

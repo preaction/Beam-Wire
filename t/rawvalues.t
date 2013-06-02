@@ -11,7 +11,7 @@ subtest 'load module from raw values' => sub {
             foo => {
                 class => 'Foo',
                 args  => {
-                    foo => { ref => 'greeting' }
+                    foo => { '$ref' => 'greeting' }
                 },
             },
             greeting => {

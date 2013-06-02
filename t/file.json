@@ -1,7 +1,7 @@
 {
     "foo": {
         "class": "Foo",
-        "args": { "bar": { "ref": "bar" } }
+        "args": { "bar": { "$ref": "bar" } }
     },
     "bar": {
         "class": "Bar",

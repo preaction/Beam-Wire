@@ -5,7 +5,7 @@ inline_container:
             foo:
                 class: Foo
                 args:
-                    bar: { ref: bar }
+                    bar: { $ref: bar }
             bar:
                 class: Bar
                 args:
@@ -14,13 +14,13 @@ service_container:
     class: Beam::Wire
     args:
         services:
-            fizz: { ref: fizz }
-            buzz: { ref: buzz }
+            fizz: { $ref: fizz }
+            buzz: { $ref: buzz }
 
 fizz:
     class: Foo
     args:
-        bar: { ref: 'inline_container/bar' }
+        bar: { $ref: 'inline_container/bar' }
 
 buzz:
     class: Bar

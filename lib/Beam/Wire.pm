@@ -87,7 +87,7 @@ independently or as a dependent of other services.
         class: 'CHI'
         args:
             driver: 'DBI'
-            dbh: { ref: 'production_db' }
+            dbh: { $ref: 'production_db' }
     development_db:
         class: 'DBI'
         method: connect
@@ -98,7 +98,7 @@ independently or as a dependent of other services.
         class: 'CHI'
         args:
             driver: 'DBI'
-            dbh: { ref: 'development_db' }
+            dbh: { $ref: 'development_db' }
 
 =head3 Service Attributes
 
@@ -194,11 +194,11 @@ value, C<factory>, will create a new instance of the service every time:
     report_yesterday:
         class: My::Report
         args:
-            date: { ref: today, method: add, args: [ "days", "-1" ] }
+            date: { $ref: today, $method: add, $args: [ "days", "-1" ] }
     report_today:
         class: My::Report
         args:
-            date: { ref: today }
+            date: { $ref: today }
 
 C<DateTime->add> modifies the object and returns the newly-modified object (to
 allow for method chaining.) Without C<lifecycle: factory>, the C<today> service
@@ -271,14 +271,14 @@ container. If even more control is needed, you can make a subclass of Beam::Wire
         class: CHI
         args:
             driver: 'DBI'
-            dbh: { ref: 'dbh' }
+            dbh: { $ref: 'dbh' }
     dbh:
         class: DBI
         method: connect
         args:
-            - { ref: dsn }
-            - { ref: usr }
-            - { ref: pwd }
+            - { $ref: dsn }
+            - { $ref: usr }
+            - { $ref: pwd }
     dsn:
         value: "dbi:SQLite:memory:"
     usr:
@@ -289,8 +289,8 @@ container. If even more control is needed, you can make a subclass of Beam::Wire
 The reuse of service and configuration containers as arguments for other
 services is encouraged so we have provided a means of referencing those
 objects within your configuration. A reference is an arugment (a service
-argument) in the form of a hashref with a C<ref> key whose value is
-the name of another service. Optionally, this hashref may contain a C<path>
+argument) in the form of a hashref with a C<$ref> key whose value is
+the name of another service. Optionally, this hashref may contain a C<$path>
 key whose value is a L<Data::DPath> search string which should return the found
 data structure from within the referenced service.
 
@@ -362,6 +362,21 @@ has services => (
     is      => 'ro',
     isa     => HashRef,
     default => sub { {} },
+);
+
+=attribute meta_prefix
+
+The character that begins a meta-property inside of a service's C<args>. This
+includes C<$ref>, C<$path>, C<$method>, and etc...
+
+The default value is '$'. The empty string is allowed.
+
+=cut
+
+has meta_prefix => (
+    is      => 'ro',
+    isa     => Str,
+    default => sub { '$' },
 );
 
 =method get( name, [ overrides ] )
@@ -496,25 +511,33 @@ sub merge_config {
 sub find_refs {
     my ( $self, @args ) = @_;
     my @out;
+    my $prefix = $self->meta_prefix;
+    my %meta = (
+        ref     => "${prefix}ref",
+        path    => "${prefix}path",
+        method  => "${prefix}method",
+        args    => "${prefix}args",
+    );
     for my $arg ( @args ) {
         if ( ref $arg eq 'HASH' ) {
             # detect references
             my @keys = keys %$arg;
-            if ( @keys and $keys[0] eq 'ref' ) {
+            if ( @keys and $keys[0] eq $meta{ref} ) {
                 # resolve service ref
                 my @ref;
-                my $name = $arg->{ref};
+                my $name = $arg->{ $meta{ref} };
                 my $service = $self->get( $name );
                 # resolve service ref w/path
-                if ( $arg->{path} ) {
+                if ( my $path = $arg->{ $meta{path} } ) {
                     # locate foreign service data
                     my $conf = $self->config->{$name};
-                    @ref = dpath($arg->{path})->match($service);
+                    @ref = dpath( $path )->match($service);
                 }
-                elsif ( my $method = $arg->{method} ) {
-                    my @args = !$arg->{args}                ? ()
-                             : ref $arg->{args} eq 'ARRAY'  ? @{ $arg->{args} } 
-                             : $arg->{args};
+                elsif ( my $method = $arg->{ $meta{method} } ) {
+                    my $args = $arg->{ $meta{args} };
+                    my @args = !$args                ? ()
+                             : ref $args eq 'ARRAY'  ? @{ $args }
+                             : $args;
                     @ref = $service->$method( @args );
                 }
                 else {

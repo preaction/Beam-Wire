@@ -38,13 +38,13 @@ use Beam::Wire;
                 bar => {
                     class => 'Bar',
                     args  => {
-                        foo => { ref => 'foo' },
+                        foo => { '$ref' => 'foo' },
                     },
                 },
                 baz => {
                     class => 'Baz',
                     args  => {
-                        bar => { ref => 'bar' },
+                        bar => { '$ref' => 'bar' },
                     },
                 },
             },

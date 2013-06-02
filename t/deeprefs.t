@@ -12,8 +12,8 @@ subtest 'load module from refs' => sub {
                 class => 'Foo',
                 args  => {
                     foo => {
-                        ref  => 'config',
-                        path => '//en/greeting'
+                        '$ref'  => 'config',
+                        '$path' => '//en/greeting'
                     }
                 },
             },

@@ -11,8 +11,8 @@ my $wire = Beam::Wire->new(
             class => 'Foo',
             args  => {
                 foo => {
-                    ref => 'greeting',
-                    method => 'greet',
+                    '$ref' => 'greeting',
+                    '$method' => 'greet',
                 },
             },
         },
@@ -20,9 +20,9 @@ my $wire = Beam::Wire->new(
             class => 'Foo',
             args => {
                 foo => {
-                    ref => 'greeting',
-                    method => 'greet',
-                    args => 'Bar',
+                    '$ref' => 'greeting',
+                    '$method' => 'greet',
+                    '$args' => 'Bar',
                 },
             },
         },
@@ -30,9 +30,9 @@ my $wire = Beam::Wire->new(
             class => 'Foo',
             args => {
                 foo => {
-                    ref => 'greeting',
-                    method => 'greet',
-                    args => [ 'Foo', 'Bar' ],
+                    '$ref' => 'greeting',
+                    '$method' => 'greet',
+                    '$args' => [ 'Foo', 'Bar' ],
                 },
             },
         },
@@ -40,9 +40,9 @@ my $wire = Beam::Wire->new(
             class => 'Foo',
             args => {
                 foo => {
-                    ref => 'bonjour',
-                    method => 'greet',
-                    args => 'Foo',
+                    '$ref' => 'bonjour',
+                    '$method' => 'greet',
+                    '$args' => 'Foo',
                 },
             },
         },
