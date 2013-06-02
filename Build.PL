@@ -23,7 +23,7 @@ my %module_build_args = (
     "Al Newkirk <anewkirk\@ana.io>"
   ],
   "dist_name" => "Beam-Wire",
-  "dist_version" => "0.013",
+  "dist_version" => "0.014",
   "license" => "perl",
   "module_name" => "Beam::Wire",
   "recommends" => {},
@@ -32,6 +32,7 @@ my %module_build_args = (
     "Class::Load" => 0,
     "Config::Any" => "0.23",
     "Data::DPath" => "0.49",
+    "List::MoreUtils" => 0,
     "Moo" => 0,
     "MooX::Types::MooseLike" => 0
   },

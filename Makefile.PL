@@ -30,10 +30,11 @@ my %WriteMakefileArgs = (
     "Class::Load" => 0,
     "Config::Any" => "0.23",
     "Data::DPath" => "0.49",
+    "List::MoreUtils" => 0,
     "Moo" => 0,
     "MooX::Types::MooseLike" => 0
   },
-  "VERSION" => "0.013",
+  "VERSION" => "0.014",
   "test" => {
     "TESTS" => "t/*.t"
   }

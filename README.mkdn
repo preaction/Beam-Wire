@@ -4,7 +4,7 @@ Beam::Wire - A Dependency Injection Container
 
 # VERSION
 
-version 0.013
+version 0.014
 
 # SYNOPSIS
 
@@ -78,7 +78,7 @@ independently or as a dependent of other services.
         class: 'CHI'
         args:
             driver: 'DBI'
-            dbh: { ref: 'production_db' }
+            dbh: { $ref: 'production_db' }
     development_db:
         class: 'DBI'
         method: connect
@@ -89,7 +89,7 @@ independently or as a dependent of other services.
         class: 'CHI'
         args:
             driver: 'DBI'
-            dbh: { ref: 'development_db' }
+            dbh: { $ref: 'development_db' }
 
 ### Service Attributes
 
@@ -185,11 +185,11 @@ value, `factory`, will create a new instance of the service every time:
     report_yesterday:
         class: My::Report
         args:
-            date: { ref: today, method: add, args: [ "days", "-1" ] }
+            date: { $ref: today, $method: add, $args: [ "days", "-1" ] }
     report_today:
         class: My::Report
         args:
-            date: { ref: today }
+            date: { $ref: today }
 
 `DateTime-`add> modifies the object and returns the newly-modified object (to
 allow for method chaining.) Without `lifecycle: factory`, the `today` service
@@ -262,14 +262,14 @@ container. If even more control is needed, you can make a subclass of Beam::Wire
         class: CHI
         args:
             driver: 'DBI'
-            dbh: { ref: 'dbh' }
+            dbh: { $ref: 'dbh' }
     dbh:
         class: DBI
         method: connect
         args:
-            - { ref: dsn }
-            - { ref: usr }
-            - { ref: pwd }
+            - { $ref: dsn }
+            - { $ref: usr }
+            - { $ref: pwd }
     dsn:
         value: "dbi:SQLite:memory:"
     usr:
@@ -280,8 +280,8 @@ container. If even more control is needed, you can make a subclass of Beam::Wire
 The reuse of service and configuration containers as arguments for other
 services is encouraged so we have provided a means of referencing those
 objects within your configuration. A reference is an arugment (a service
-argument) in the form of a hashref with a `ref` key whose value is
-the name of another service. Optionally, this hashref may contain a `path`
+argument) in the form of a hashref with a `$ref` key whose value is
+the name of another service. Optionally, this hashref may contain a `$path`
 key whose value is a [Data::DPath](http://search.cpan.org/perldoc?Data::DPath) search string which should return the found
 data structure from within the referenced service.
 
@@ -312,11 +312,39 @@ loaded by [Config::Any](http://search.cpan.org/perldoc?Config::Any) using the fi
 
 A hashref of services. If you have any services already built, add them here.
 
+## meta\_prefix
+
+The character that begins a meta-property inside of a service's `args`. This
+includes `$ref`, `$path`, `$method`, and etc...
+
+The default value is '$'. The empty string is allowed.
+
 # METHODS
 
-## get
+## get( name, \[ overrides \] )
 
-The get method resolves and returns the specified service.
+The get method resolves and returns the service named `name`.
+
+`overrides` may be a list of name-value pairs. If specified, get()
+will create an anonymous service that extends the `name` service
+with the given config overrides:
+
+    # test.pl
+    use Beam::Wire;
+    my $wire = Beam::Wire->new(
+        config => {
+            foo => {
+                args => {
+                    text => 'Hello, World!',
+                },
+            },
+        },
+    );
+    my $foo = $wire->get( 'foo', args => { text => 'Hello, Chicago!' } );
+    print $foo; # prints "Hello, Chicago!"
+
+This allows you to create factories out of any service, overriding service
+configuration at run-time.
 
 ## set
 
