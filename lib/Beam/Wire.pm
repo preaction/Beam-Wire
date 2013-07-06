@@ -350,7 +350,9 @@ has config => (
 );
 
 sub _build_config {
-    my ( $self ) = @_; local $Config::Any::YAML::NO_YAML_XS_WARNING = 1;
+    my ( $self ) = @_;
+    return {} if ( !$self->file );
+    local $Config::Any::YAML::NO_YAML_XS_WARNING = 1;
     my $loader = Config::Any->load_files( {
         files  => [$self->file], use_ext => 1, flatten_to_hash => 1
     } );
