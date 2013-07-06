@@ -206,6 +206,10 @@ allow for method chaining.) Without C<lifecycle: factory>, the C<today> service
 would become yesterday, making it hard to know what C<report_today> would
 report on.
 
+An C<eager> value will be created as soon as the container is created. If you
+have an object that registers itself upon instantiation, you can make sure your
+object is created as soon as possible by doing C<lifecycle: eager>.
+
 =head3 Inner Containers
 
 Beam::Wire objects can hold other Beam::Wire objects!
@@ -362,8 +366,15 @@ A hashref of services. If you have any services already built, add them here.
 has services => (
     is      => 'ro',
     isa     => HashRef,
-    default => sub { {} },
+    lazy    => 1,
+    builder => 1,
 );
+
+sub _build_services {
+    my ( $self ) = @_;
+    my $services = {};
+    return $services;
+}
 
 =attribute meta_prefix
 
@@ -423,7 +434,7 @@ sub get {
     if ( !$service ) {
         my %config  = %{ $self->config->{$name} };
         $service = $self->create_service( %config );
-        if ( !$config{lifecycle} || lc $config{lifecycle} eq 'singleton' ) {
+        if ( !$config{lifecycle} || lc $config{lifecycle} ne 'factory' ) {
             $self->services->{$name} = $service;
         }
     }
@@ -567,5 +578,16 @@ sub find_refs {
 Create a new container.
 
 =cut
+
+sub BUILD {
+    my ( $self ) = @_;
+    # Create all the eager services
+    for my $key ( keys %{ $self->config } ) {
+        my $config = $self->config->{$key};
+        if ( $config->{lifecycle} && $config->{lifecycle} eq 'eager' ) {
+            $self->get($key);
+        }
+    }
+}
 
 1;

@@ -55,6 +55,28 @@ subtest 'factory lifecycle' => sub {
     isnt refaddr $bar->foo, refaddr $oof, 'different foo object is given to bar';
 };
 
+subtest 'eager lifecycle' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            foo => {
+                class => 'Foo',
+            },
+            bar => {
+                class => 'Foo',
+                lifecycle => 'eager',
+                args => {
+                    foo => { '$ref' => 'foo' },
+                },
+            },
+        },
+    );
+
+    my $bar = $wire->services->{bar};
+    isa_ok $bar, 'Foo', 'bar exists without calling get()';
+    is refaddr $bar->foo, refaddr $wire->get('foo'),
+        'foo is also created, because bar depends on foo';
+};
+
 subtest 'default lifecycle is singleton' => sub {
     my $wire = Beam::Wire->new(
         config => {

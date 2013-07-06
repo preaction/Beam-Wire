@@ -7,11 +7,7 @@ use Module::Build 0.3601;
 
 my %module_build_args = (
   "build_requires" => {
-    "JSON" => 0,
-    "Module::Build" => "0.3601",
-    "Test::Compile" => 0,
-    "Test::Most" => 0,
-    "YAML" => 0
+    "Module::Build" => "0.3601"
   },
   "configure_requires" => {
     "ExtUtils::MakeMaker" => "6.30",
@@ -23,7 +19,7 @@ my %module_build_args = (
     "Al Newkirk <anewkirk\@ana.io>"
   ],
   "dist_name" => "Beam-Wire",
-  "dist_version" => "0.014",
+  "dist_version" => "0.015",
   "license" => "perl",
   "module_name" => "Beam::Wire",
   "recommends" => {},
@@ -36,9 +32,28 @@ my %module_build_args = (
     "Moo" => 0,
     "MooX::Types::MooseLike" => 0
   },
-  "script_files" => []
+  "script_files" => [],
+  "test_requires" => {
+    "JSON" => 0,
+    "Test::Compile" => 0,
+    "Test::Most" => 0,
+    "YAML" => 0
+  }
 );
 
+
+unless ( eval { Module::Build->VERSION(0.4004) } ) {
+  my $tr = delete $module_build_args{test_requires};
+  my $br = $module_build_args{build_requires};
+  for my $mod ( keys %$tr ) {
+    if ( exists $br->{$mod} ) {
+      $br->{$mod} = $tr->{$mod} if $tr->{$mod} > $br->{$mod};
+    }
+    else {
+      $br->{$mod} = $tr->{$mod};
+    }
+  }
+}
 
 my $build = Module::Build->new(%module_build_args);
 

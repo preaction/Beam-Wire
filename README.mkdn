@@ -4,7 +4,7 @@ Beam::Wire - A Dependency Injection Container
 
 # VERSION
 
-version 0.014
+version 0.015
 
 # SYNOPSIS
 
@@ -195,6 +195,10 @@ value, `factory`, will create a new instance of the service every time:
 allow for method chaining.) Without `lifecycle: factory`, the `today` service
 would become yesterday, making it hard to know what `report_today` would
 report on.
+
+An `eager` value will be created as soon as the container is created. If you
+have an object that registers itself upon instantiation, you can make sure your
+object is created as soon as possible by doing `lifecycle: eager`.
 
 ### Inner Containers
 
