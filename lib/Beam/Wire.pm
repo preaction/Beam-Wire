@@ -498,20 +498,20 @@ sub set {
 }
 
 sub parse_args {
-    my ( $self, %service_info ) = @_;
-    return if not exists $service_info{args};
+    my ( $self, $class, $args ) = @_;
+    return if not $args;
     my @args;
-    if ( ref $service_info{args} eq 'ARRAY' ) {
-        @args = @{$service_info{args}};
+    if ( ref $args eq 'ARRAY' ) {
+        @args = @$args;
     }
-    elsif ( ref $service_info{args} eq 'HASH' ) {
-        @args = %{$service_info{args}};
+    elsif ( ref $args eq 'HASH' ) {
+        @args = %$args;
     }
     else {
         # Try anyway?
-        @args = $service_info{args};
+        @args = $args;
     }
-    if ( $service_info{class}->isa( 'Beam::Wire' ) ) {
+    if ( $class->isa( 'Beam::Wire' ) ) {
         my %args = @args;
         # Subcontainers cannot scan for refs in their configs
         my $config = delete $args{config};
@@ -546,7 +546,7 @@ sub create_service {
             my $method = $m->{method};
             my $return = $m->{return} || '';
             delete $service_info{args};
-            my @args = $self->parse_args( %service_info, %$m );
+            my @args = $self->parse_args( $service_info{class}, $m->{args} );
             my $invocant = $service || $service_info{class};
             my $output = $invocant->$method( @args );
             $service = !$service || $return eq 'chain' ? $output
@@ -554,7 +554,7 @@ sub create_service {
         }
     }
     else {
-        my @args = $self->parse_args( %service_info );
+        my @args = $self->parse_args( @service_info{"class","args"} );
         $service = $service_info{class}->$method( @args );
     }
     return $service;

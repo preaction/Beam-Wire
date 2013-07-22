@@ -2,7 +2,7 @@ NAME
     Beam::Wire - A Dependency Injection Container
 
 VERSION
-    version 0.015
+    version 0.016
 
 SYNOPSIS
         # wire.yml
@@ -93,6 +93,45 @@ OVERVIEW
 
    method
     The class method to call to construct the object. Defaults to "new".
+
+    If multiple methods are needed to initialize an object, "method" can be
+    an arrayref of hashrefs, like so:
+
+        my_service:
+            class: My::Service
+            method:
+                - method: new
+                  args:
+                    foo: bar
+                - method: set_baz
+                  args:
+                    - Fizz
+
+    In this example, first we call "My::Service-"new( foo => "bar" );> to
+    get our object, then we call "$obj-"set_baz( "Fizz" );> as a further
+    initialization step.
+
+    To chain methods together, add "return: chain":
+
+        my_service:
+            class: My::Service
+            method:
+                - method: new
+                  args:
+                    foo: bar
+                - method: set_baz
+                  return: chain
+                  args:
+                    - Fizz
+                - method: set_buzz
+                  return: chain
+                  args:
+                    - Bork
+
+    This example is equivalent to the following code:
+
+        my $service = My::Service->new( foo => "bar" )->set_baz( "Fizz" )
+                    ->set_buzz( "Bork" );
 
    args
     The arguments to the "method" method. This can be either an array or a
