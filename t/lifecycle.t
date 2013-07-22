@@ -1,9 +1,7 @@
 
 use Test::Most;
-use FindBin qw( $Bin );
-use File::Spec::Functions qw( catdir );
+use Test::Lib;
 use Scalar::Util qw( refaddr );
-use lib catdir( $Bin , 'lib' );
 use Beam::Wire;
 
 subtest 'singleton lifecycle' => sub {

@@ -1,7 +1,5 @@
 
 use Test::Most;
-use FindBin qw( $Bin );
-use File::Spec::Functions qw( catfile );
 use Scalar::Util qw( refaddr );
 
 use Beam::Wire;

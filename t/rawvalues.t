@@ -1,8 +1,6 @@
 
 use Test::Most;
-use FindBin qw( $Bin );
-use File::Spec::Functions qw( catdir );
-use lib catdir( $Bin , 'lib' );
+use Test::Lib;
 use Beam::Wire;
 
 subtest 'load module from raw values' => sub {
