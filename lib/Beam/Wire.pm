@@ -112,6 +112,45 @@ method called.
 
 The class method to call to construct the object. Defaults to C<new>.
 
+If multiple methods are needed to initialize an object, C<method> can be an
+arrayref of hashrefs, like so:
+
+    my_service:
+        class: My::Service
+        method:
+            - method: new
+              args:
+                foo: bar
+            - method: set_baz
+              args:
+                - Fizz
+
+In this example, first we call C<My::Service->new( foo => "bar" );> to get our
+object, then we call C<$obj->set_baz( "Fizz" );> as a further initialization
+step.
+
+To chain methods together, add C<return: chain>:
+
+    my_service:
+        class: My::Service
+        method:
+            - method: new
+              args:
+                foo: bar
+            - method: set_baz
+              return: chain
+              args:
+                - Fizz
+            - method: set_buzz
+              return: chain
+              args:
+                - Bork
+
+This example is equivalent to the following code:
+
+    my $service = My::Service->new( foo => "bar" )->set_baz( "Fizz" )
+                ->set_buzz( "Bork" );
+
 =head4 args
 
 The arguments to the C<method> method. This can be either an array or a hash,
@@ -496,13 +535,29 @@ sub create_service {
     my ( $self, %service_info ) = @_;
     # Compose the parent ref into the copy, in case the parent changes
     %service_info = $self->merge_config( %service_info );
-    my @args = $self->parse_args( %service_info );
     if ( $service_info{value} ) {
         return $service_info{value};
     }
     load_class( $service_info{class} );
     my $method = $service_info{method} || "new";
-    return $service_info{class}->$method( @args );
+    my $service;
+    if ( ref $method eq 'ARRAY' ) {
+        for my $m ( @$method ) {
+            my $method = $m->{method};
+            my $return = $m->{return} || '';
+            delete $service_info{args};
+            my @args = $self->parse_args( %service_info, %$m );
+            my $invocant = $service || $service_info{class};
+            my $output = $invocant->$method( @args );
+            $service = !$service || $return eq 'chain' ? $output
+                     : $service;
+        }
+    }
+    else {
+        my @args = $self->parse_args( %service_info );
+        $service = $service_info{class}->$method( @args );
+    }
+    return $service;
 }
 
 sub merge_config {
