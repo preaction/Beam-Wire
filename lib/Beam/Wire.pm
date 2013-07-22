@@ -580,41 +580,10 @@ sub merge_config {
 sub find_refs {
     my ( $self, @args ) = @_;
     my @out;
-    my $prefix = $self->meta_prefix;
-    my %meta = (
-        ref     => "${prefix}ref",
-        path    => "${prefix}path",
-        method  => "${prefix}method",
-        args    => "${prefix}args",
-    );
     for my $arg ( @args ) {
         if ( ref $arg eq 'HASH' ) {
-            # detect references
-            my @keys = keys %$arg;
-            if ( $arg->{ $meta{ref} } and all { /^\Q$prefix/ } @keys ) {
-                # resolve service ref
-                my @ref;
-                my $name = $arg->{ $meta{ref} };
-                my $service = $self->get( $name );
-                # resolve service ref w/path
-                if ( my $path = $arg->{ $meta{path} } ) {
-                    # locate foreign service data
-                    my $conf = $self->config->{$name};
-                    @ref = dpath( $path )->match($service);
-                }
-                elsif ( my $method = $arg->{ $meta{method} } ) {
-                    my $args = $arg->{ $meta{args} };
-                    my @args = !$args                ? ()
-                             : ref $args eq 'ARRAY'  ? @{ $args }
-                             : $args;
-                    @ref = $service->$method( @args );
-                }
-                else {
-                    @ref = $service;
-                }
-
-                # return service(s)
-                push @out, @ref;
+            if ( $self->is_meta( $arg ) ) {
+                push @out, $self->resolve_ref( $arg );
             }
             else {
                 push @out, { $self->find_refs( %$arg ) };
@@ -629,6 +598,52 @@ sub find_refs {
     }
     return @out;
 }
+
+sub is_meta {
+    my ( $self, $arg ) = @_;
+    my $prefix = $self->meta_prefix;
+    return all { /^\Q$prefix/ } keys %$arg;
+}
+
+sub get_meta_names {
+    my ( $self ) = @_;
+    my $prefix = $self->meta_prefix;
+    return (
+        ref     => "${prefix}ref",
+        path    => "${prefix}path",
+        method  => "${prefix}method",
+        args    => "${prefix}args",
+    );
+}
+
+sub resolve_ref {
+    my ( $self, $arg ) = @_;
+
+    my %meta = $self->get_meta_names;
+
+    my @ref;
+    my $name = $arg->{ $meta{ref} };
+    my $service = $self->get( $name );
+    # resolve service ref w/path
+    if ( my $path = $arg->{ $meta{path} } ) {
+        # locate foreign service data
+        my $conf = $self->config->{$name};
+        @ref = dpath( $path )->match($service);
+    }
+    elsif ( my $method = $arg->{ $meta{method} } ) {
+        my $args = $arg->{ $meta{args} };
+        my @args = !$args                ? ()
+                 : ref $args eq 'ARRAY'  ? @{ $args }
+                 : $args;
+        @ref = $service->$method( @args );
+    }
+    else {
+        @ref = $service;
+    }
+
+    return @ref;
+}
+
 
 =method new
 
