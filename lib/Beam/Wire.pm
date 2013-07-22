@@ -580,10 +580,23 @@ sub merge_config {
 sub find_refs {
     my ( $self, @args ) = @_;
     my @out;
+    my %meta = $self->get_meta_names;
     for my $arg ( @args ) {
         if ( ref $arg eq 'HASH' ) {
             if ( $self->is_meta( $arg ) ) {
-                push @out, $self->resolve_ref( $arg );
+                if ( $arg->{ $meta{ ref } } ) {
+                    push @out, $self->resolve_ref( $arg );
+                }
+                elsif ( $arg->{ $meta{class} } ) {
+                    my %service_info;
+                    my $prefix = $self->meta_prefix;
+                    for my $arg_key ( keys %$arg ) {
+                        my $info_key = $arg_key;
+                        $info_key =~ s/^\Q$prefix//;
+                        $service_info{ $info_key } = $arg->{ $arg_key };
+                    }
+                    push @out, $self->create_service( %service_info );
+                }
             }
             else {
                 push @out, { $self->find_refs( %$arg ) };
@@ -608,12 +621,14 @@ sub is_meta {
 sub get_meta_names {
     my ( $self ) = @_;
     my $prefix = $self->meta_prefix;
-    return (
+    my %meta = (
         ref     => "${prefix}ref",
         path    => "${prefix}path",
         method  => "${prefix}method",
         args    => "${prefix}args",
+        class   => "${prefix}class",
     );
+    return wantarray ? %meta : \%meta;
 }
 
 sub resolve_ref {
