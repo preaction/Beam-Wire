@@ -45,7 +45,7 @@ use Beam::Wire;
 
 for (qw(file.json file.pl file.yml)) {
     subtest "load module from config - $_" => sub {
-        my $FILE = catfile( $Bin, $_ );
+        my $FILE = catfile( $Bin, 'share', $_ );
         my $wire = Beam::Wire->new( file => $FILE );
         my $foo = $wire->get('foo');
         isa_ok $foo, 'Foo';

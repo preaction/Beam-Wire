@@ -4,9 +4,9 @@ use FindBin qw( $Bin );
 use File::Spec::Functions qw( catfile );
 use Scalar::Util qw( refaddr );
 
-my $SINGLE_FILE = catfile( $Bin, 'file.yml' );
-my $DEEP_FILE   = catfile( $Bin, 'inner_inline.yml' );
-my $INNER_FILE  = catfile( $Bin, 'inner_file.yml' );
+my $SINGLE_FILE = catfile( $Bin, 'share', 'file.yml' );
+my $DEEP_FILE   = catfile( $Bin, 'share', 'inner_inline.yml' );
+my $INNER_FILE  = catfile( $Bin, 'share', 'inner_file.yml' );
 
 use Beam::Wire;
 
