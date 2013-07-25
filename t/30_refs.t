@@ -166,4 +166,34 @@ subtest 'anonymous reference' => sub {
     is $svc->foo->foo, 'Bar';
 };
 
+subtest 'anonymous extends' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            bar => {
+                class => 'Foo',
+                args => {
+                    foo => 'HIDDEN',
+                },
+            },
+            foo => {
+                class => 'Foo',
+                args  => {
+                    foo => {
+                        '$extends' => 'bar',
+                        '$args' => {
+                            foo => 'Bar',
+                        },
+                    },
+                },
+            },
+        },
+    );
+
+    my $svc;
+    lives_ok { $svc = $wire->get( 'foo' ) };
+    isa_ok $svc, 'Foo';
+    isa_ok $svc->foo, 'Foo';
+    is $svc->foo->foo, 'Bar';
+};
+
 done_testing;

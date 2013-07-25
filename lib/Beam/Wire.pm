@@ -587,7 +587,7 @@ sub find_refs {
                 if ( $arg->{ $meta{ ref } } ) {
                     push @out, $self->resolve_ref( $arg );
                 }
-                elsif ( $arg->{ $meta{class} } ) {
+                else { # Try to treat it as a service to create
                     my %service_info;
                     my $prefix = $self->meta_prefix;
                     for my $arg_key ( keys %$arg ) {
