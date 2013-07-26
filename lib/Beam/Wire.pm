@@ -563,7 +563,10 @@ sub create_service {
 sub merge_config {
     my ( $self, %service_info ) = @_;
     if ( $service_info{ extends } ) {
-        my %base_config = %{ $self->config->{ $service_info{extends} } };
+        my $base_config_ref = $self->config->{ $service_info{extends} };
+        die "Service extends a service ($service_info{extends}) that does not exist"
+            unless $base_config_ref;
+        my %base_config = %$base_config_ref;
         # Merge the args separately, to be a bit nicer about hashes of arguments
         my $args;
         if ( ref $service_info{args} eq 'HASH' && ref $base_config{args} eq 'HASH' ) {

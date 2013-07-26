@@ -202,4 +202,22 @@ subtest 'nested data structures' => sub {
     };
 };
 
+subtest 'extended service does not exist' => sub {
+    my $wire;
+    lives_ok {
+        $wire = Beam::Wire->new(
+            config => {
+                hash => {
+                    extends => 'base_hash',
+                    args => {
+                        who => 'Everyone',
+                    },
+                },
+            },
+        );
+    } 'creating a bad wire is fine';
+    dies_ok { $wire->get( 'hash' ) } 'getting a bad service is not';
+    like $@, qr/extends.*does not exist/, 'error message has details';
+};
+
 done_testing;
