@@ -36,6 +36,7 @@ my %module_build_args = (
   "test_requires" => {
     "JSON" => 0,
     "Test::Compile" => 0,
+    "Test::Lib" => 0,
     "Test::Most" => 0,
     "YAML" => 0
   }
