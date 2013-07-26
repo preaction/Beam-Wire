@@ -51,4 +51,10 @@ subtest 'get() override factory (anonymous services)' => sub {
     isnt refaddr $oof->foo, refaddr $foo->foo, 'our override gave our new object a new bar';
 };
 
+subtest 'dies when service not found' => sub {
+    my $wire = Beam::Wire->new;
+    dies_ok { $wire->get( 'foo' ) };
+    like $@, qr{service.+foo.+does not exist}i;
+};
+
 done_testing;

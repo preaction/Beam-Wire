@@ -473,7 +473,9 @@ sub get {
     }
     my $service = $self->services->{$name};
     if ( !$service ) {
-        my %config  = %{ $self->config->{$name} };
+        my $config_ref = $self->config->{$name};
+        die "Service ($name) does not exist!" unless $config_ref;
+        my %config  = %{ $config_ref };
         $service = $self->create_service( %config );
         if ( !$config{lifecycle} || lc $config{lifecycle} ne 'factory' ) {
             $self->services->{$name} = $service;
