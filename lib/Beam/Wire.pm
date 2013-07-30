@@ -463,17 +463,14 @@ sub get {
     my ( $self, $name, %override ) = @_;
     if ( $name =~ '/' ) {
         my ( $container_name, $service ) = split m{/}, $name, 2;
-        my $container = $self->services->{$container_name} ||=
-            $self->create_service( %{ $self->config->{$container_name} } )
-        ;
-        return $container->get( $service, %override );
+        return $self->get( $container_name )->get( $service, %override );
     }
     if ( keys %override ) {
         return $self->create_service( %override, extends => $name );
     }
     my $service = $self->services->{$name};
     if ( !$service ) {
-        my $config_ref = $self->config->{$name};
+        my $config_ref = $self->get_config($name);
         die "Service ($name) does not exist!" unless $config_ref;
         my %config  = %{ $config_ref };
         $service = $self->create_service( %config );
@@ -497,6 +494,53 @@ sub set {
         return $self->get( $container_name )->set( $service_name, $service );
     }
     $self->services->{$name} = $service;
+}
+
+=method get_config
+
+Get the config with the given name, searching inner containers if required
+
+=cut
+
+sub get_config {
+    my ( $self, $name ) = @_;
+    if ( $name =~ '/' ) {
+        my ( $container_name, $service ) = split m{/}, $name, 2;
+        my $inner_config = $self->get( $container_name )->get_config( $service );
+        # Fix relative references to prefix the container name
+        return { $self->fix_refs( $container_name, %$inner_config ) };
+    }
+    return $self->config->{$name};
+}
+
+# TODO: Refactor fix_refs and find_refs into an iterator
+sub fix_refs {
+    my ( $self, $container_name, @args ) = @_;
+    my @out;
+    my %meta = $self->get_meta_names;
+    for my $arg ( @args ) {
+        if ( ref $arg eq 'HASH' ) {
+            if ( $self->is_meta( $arg ) ) {
+                my %new = ();
+                for my $key ( @meta{qw( ref extends )} ) {
+                    if ( $arg->{$key} ) {
+                        $new{ $key } = join( "/", $container_name, $arg->{$key} );
+                    }
+                }
+                push @out, \%new;
+            }
+            else {
+                push @out, { $self->fix_refs( $container_name, %$arg ) };
+            }
+        }
+        elsif ( ref $arg eq 'ARRAY' ) {
+            push @out, [ map { $self->fix_refs( $container_name, $_ ) } @$arg ];
+        }
+        else {
+            push @out, $arg; # simple scalars
+        }
+    }
+    return @out;
 }
 
 sub parse_args {
@@ -565,7 +609,7 @@ sub create_service {
 sub merge_config {
     my ( $self, %service_info ) = @_;
     if ( $service_info{ extends } ) {
-        my $base_config_ref = $self->config->{ $service_info{extends} };
+        my $base_config_ref = $self->get_config( $service_info{extends} );
         die "Service extends a service ($service_info{extends}) that does not exist"
             unless $base_config_ref;
         my %base_config = %$base_config_ref;
@@ -632,6 +676,7 @@ sub get_meta_names {
         method  => "${prefix}method",
         args    => "${prefix}args",
         class   => "${prefix}class",
+        extends => "${prefix}extends",
     );
     return wantarray ? %meta : \%meta;
 }
@@ -647,7 +692,7 @@ sub resolve_ref {
     # resolve service ref w/path
     if ( my $path = $arg->{ $meta{path} } ) {
         # locate foreign service data
-        my $conf = $self->config->{$name};
+        my $conf = $self->get_config($name);
         @ref = dpath( $path )->match($service);
     }
     elsif ( my $method = $arg->{ $meta{method} } ) {

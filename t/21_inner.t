@@ -109,5 +109,43 @@ subtest 'inner container get() overrides' => sub {
     isnt refaddr $oof->bar, refaddr $foo->bar, 'our override gave our new object a new bar';
 };
 
+subtest 'inner extends' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            inner => {
+                class => 'Beam::Wire',
+                args => { file => $SINGLE_FILE },
+            },
+            foo => {
+                extends => 'inner/foo',
+            },
+        },
+    );
+    my $foo = $wire->get( 'foo' );
+    isa_ok $foo, 'Foo';
+    is refaddr $foo, refaddr $wire->get('foo'), 'container caches the object';
+    isa_ok $foo->bar, 'Bar', 'container injects Bar object';
+    is refaddr $wire->get('inner/bar'), refaddr $foo->bar, 'container caches Bar object';
+    is $wire->get('inner/bar')->text, "Hello, World", 'container gives bar text value';
+};
+
+subtest 'inner get_config' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            inner => {
+                class => 'Beam::Wire',
+                args => { file => $SINGLE_FILE },
+            },
+            foo => {
+                extends => 'inner/foo',
+            },
+        },
+    );
+    my $config = $wire->get_config( 'inner/foo' );
+    cmp_deeply $config, { class => 'Foo', args => { bar => { '$ref' => 'inner/bar' } } } or diag explain $config;
+};
+
+
+
 
 done_testing;
