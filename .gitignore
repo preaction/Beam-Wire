@@ -3,3 +3,9 @@
 *.tar.gz
 Beam-Wire-*
 eg
+Build
+MYMETA.json
+MYMETA.yml
+_build/
+blib/
+cover_db/
