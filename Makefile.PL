@@ -28,7 +28,8 @@ my %WriteMakefileArgs = (
     "Data::DPath" => "0.49",
     "List::MoreUtils" => 0,
     "Moo" => 0,
-    "MooX::Types::MooseLike" => 0
+    "MooX::Types::MooseLike" => 0,
+    "Throwable" => 0
   },
   "TEST_REQUIRES" => {
     "JSON" => 0,
@@ -37,7 +38,7 @@ my %WriteMakefileArgs = (
     "Test::Most" => 0,
     "YAML" => 0
   },
-  "VERSION" => "0.016",
+  "VERSION" => "1.000",
   "test" => {
     "TESTS" => "t/*.t"
   }

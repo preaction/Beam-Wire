@@ -4,7 +4,7 @@ Beam::Wire - A Dependency Injection Container
 
 # VERSION
 
-version 0.016
+version 1.000
 
 # SYNOPSIS
 
@@ -393,9 +393,37 @@ configuration at run-time.
 
 The set method configures and stores the specified service.
 
+## get\_config
+
+Get the config with the given name, searching inner containers if required
+
 ## new
 
 Create a new container.
+
+# EXCEPTIONS
+
+If there is an error internal to Beam::Wire, an exception will be thrown. If there is an
+error with creating a service or calling a method, the exception thrown will be passed-
+through unaltered.
+
+## Beam::Wire::Exception
+
+The base exception class
+
+## Beam::Wire::Exception::Service
+
+An exception with service information inside
+
+## Beam::Wire::Exception::NotFound
+
+The requested service or configuration was not found.
+
+## Beam::Wire::Exception::InvalidConfig
+
+The configuration is invalid:
+
+- Both "value" and "class" or "extends" are defined. These are mutually-exclusive.
 
 # AUTHORS
 
