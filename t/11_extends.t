@@ -217,7 +217,6 @@ subtest 'extended service does not exist' => sub {
         );
     } 'creating a bad wire is fine';
     dies_ok { $wire->get( 'hash' ) } 'getting a bad service is not';
-    like $@, qr/extends.*does not exist/, 'error message has details';
 };
 
 done_testing;

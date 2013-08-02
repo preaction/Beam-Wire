@@ -466,14 +466,17 @@ sub get {
         return $self->get( $container_name )->get( $service, %override );
     }
     if ( keys %override ) {
-        return $self->create_service( %override, extends => $name );
+        return $self->create_service( "\$anonymous extends $name", %override, extends => $name );
     }
     my $service = $self->services->{$name};
     if ( !$service ) {
         my $config_ref = $self->get_config($name);
-        die "Service ($name) does not exist!" unless $config_ref;
+        Beam::Wire::Exception::NotFound->throw(
+            name => $name,
+            file => $self->file,
+        ) unless $config_ref;
         my %config  = %{ $config_ref };
-        $service = $self->create_service( %config );
+        $service = $self->create_service( $name, %config );
         if ( !$config{lifecycle} || lc $config{lifecycle} ne 'factory' ) {
             $self->services->{$name} = $service;
         }
@@ -578,9 +581,20 @@ sub parse_args {
 }
 
 sub create_service {
-    my ( $self, %service_info ) = @_;
+    my ( $self, $name, %service_info ) = @_;
     # Compose the parent ref into the copy, in case the parent changes
     %service_info = $self->merge_config( %service_info );
+    # value and class/extends are mutually exclusive
+    # must check after merge_config in case parent config has class/value
+    if ( exists $service_info{value} && (
+            exists $service_info{class} || exists $service_info{extends}
+        )
+    ) {
+        Beam::Wire::Exception::InvalidConfig->throw(
+            name => $name,
+            file => $self->file,
+        );
+    }
     if ( $service_info{value} ) {
         return $service_info{value};
     }
@@ -610,8 +624,10 @@ sub merge_config {
     my ( $self, %service_info ) = @_;
     if ( $service_info{ extends } ) {
         my $base_config_ref = $self->get_config( $service_info{extends} );
-        die "Service extends a service ($service_info{extends}) that does not exist"
-            unless $base_config_ref;
+        Beam::Wire::Exception::NotFound->throw(
+            name => $service_info{extends},
+            file => $self->file,
+        ) unless $base_config_ref;
         my %base_config = %$base_config_ref;
         # Merge the args separately, to be a bit nicer about hashes of arguments
         my $args;
@@ -644,7 +660,7 @@ sub find_refs {
                         $info_key =~ s/^\Q$prefix//;
                         $service_info{ $info_key } = $arg->{ $arg_key };
                     }
-                    push @out, $self->create_service( %service_info );
+                    push @out, $self->create_service( '$anonymous', %service_info );
                 }
             }
             else {
@@ -726,5 +742,71 @@ sub BUILD {
         }
     }
 }
+
+=head1 EXCEPTIONS
+
+If there is an error internal to Beam::Wire, an exception will be thrown. If there is an
+error with creating a service or calling a method, the exception thrown will be passed-
+through unaltered.
+
+=head2 Beam::Wire::Exception
+
+The base exception class
+
+=cut
+
+package Beam::Wire::Exception;
+use Moo;
+with 'Throwable';
+
+=head2 Beam::Wire::Exception::Service
+
+An exception with service information inside
+
+=cut
+
+package Beam::Wire::Exception::Service;
+use Moo;
+use MooX::Types::MooseLike::Base qw( :all );
+extends 'Beam::Wire::Exception';
+
+has name => (
+    is          => 'ro',
+    isa         => Str,
+    required    => 1,
+);
+
+has file => (
+    is          => 'ro',
+    isa         => Maybe[Str],
+);
+
+=head2 Beam::Wire::Exception::NotFound
+
+The requested service or configuration was not found.
+
+=cut
+
+package Beam::Wire::Exception::NotFound;
+use Moo;
+extends 'Beam::Wire::Exception::Service';
+
+=head2 Beam::Wire::Exception::InvalidConfig
+
+The configuration is invalid:
+
+=over 4
+
+=item *
+
+Both "value" and "class" or "extends" are defined. These are mutually-exclusive.
+
+=back
+
+=cut
+
+package Beam::Wire::Exception::InvalidConfig;
+use Moo;
+extends 'Beam::Wire::Exception::Service';
 
 1;

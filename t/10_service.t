@@ -54,7 +54,6 @@ subtest 'get() override factory (anonymous services)' => sub {
 subtest 'dies when service not found' => sub {
     my $wire = Beam::Wire->new;
     dies_ok { $wire->get( 'foo' ) };
-    like $@, qr{service.+foo.+does not exist}i;
 };
 
 done_testing;
