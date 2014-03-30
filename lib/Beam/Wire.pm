@@ -56,8 +56,8 @@ it just requires them and therefore receives them.
 
 =head1 OVERVIEW
 
-Beam::Wire loads a configuration L<file> and stores the specified configuration
-in the L<config> attribute which is used to resolve it's services. This section
+Beam::Wire loads a configuration L<file|file> and stores the specified configuration
+in the L<config|config attribute> which is used to resolve it's services. This section
 will give you an overview of how to declare dependencies and services, and shape
 your configuration file.
 
@@ -306,7 +306,7 @@ added:
 
     my $dbh = $container->get( 'inner/dbh' );
 
-If more control is needed, you can set the L<dir> attribute on the parent
+If more control is needed, you can set the L<dir|dir attribute> on the parent
 container. If even more control is needed, you can make a subclass of Beam::Wire.
 
 =head3 Service/Configuration References
@@ -331,12 +331,12 @@ container. If even more control is needed, you can make a subclass of Beam::Wire
         value: "s3cret"
 
 The reuse of service and configuration containers as arguments for other
-services is encouraged so we have provided a means of referencing those
-objects within your configuration. A reference is an arugment (a service
-argument) in the form of a hashref with a C<$ref> key whose value is
-the name of another service. Optionally, this hashref may contain a C<$path>
-key whose value is a L<Data::DPath> search string which should return the found
-data structure from within the referenced service.
+services is encouraged so we have provided a means of referencing those objects
+within your configuration. A reference is an arugment (a service argument) in
+the form of a hashref with a C<$ref> key whose value is the name of another
+service. Optionally, this hashref may contain a C<$path> key whose value is a
+L<Data::DPath|Data::DPath> search string which should return the found data
+structure from within the referenced service.
 
 It is also possible to use raw-values as services, this is done by configuring a
 service using a single key/value pair with a C<value> key whose value contains
@@ -361,7 +361,7 @@ has file => (
 
 The dir attribute contains the directory path to use when searching for inner
 container files. Defaults to the directory which contains the file specified by
-the L<file> attribute.
+the L<file|file attribute>.
 
 =cut
 
@@ -377,7 +377,8 @@ has dir => (
 =attribute config
 
 The config attribute contains a hashref of service configurations. This data is
-loaded by L<Config::Any> using the file specified by the L<file> attribute.
+loaded by L<Config::Any|Config::Any> using the file specified by the
+L<file|file attribute>.
 
 =cut
 
@@ -429,7 +430,7 @@ The default value is '$'. The empty string is allowed.
 has meta_prefix => (
     is      => 'ro',
     isa     => Str,
-    default => sub { '$' },
+    default => sub { q{$} },
 );
 
 =method get( name, [ overrides ] )
@@ -461,7 +462,7 @@ configuration at run-time.
 
 sub get {
     my ( $self, $name, %override ) = @_;
-    if ( $name =~ '/' ) {
+    if ( $name =~ q{/} ) {
         my ( $container_name, $service ) = split m{/}, $name, 2;
         return $self->get( $container_name )->get( $service, %override );
     }
@@ -471,10 +472,12 @@ sub get {
     my $service = $self->services->{$name};
     if ( !$service ) {
         my $config_ref = $self->get_config($name);
-        Beam::Wire::Exception::NotFound->throw(
-            name => $name,
-            file => $self->file,
-        ) unless $config_ref;
+        unless ( $config_ref ) {
+            Beam::Wire::Exception::NotFound->throw(
+                name => $name,
+                file => $self->file,
+            );
+        }
         my %config  = %{ $config_ref };
         $service = $self->create_service( $name, %config );
         if ( !$config{lifecycle} || lc $config{lifecycle} ne 'factory' ) {
@@ -490,13 +493,16 @@ The set method configures and stores the specified service.
 
 =cut
 
+## no critic ( ProhibitAmbiguousNames )
+# This was named set() before I started using Perl::Critic
 sub set {
     my ( $self, $name, $service ) = @_;
-    if ( $name =~ '/' ) {
+    if ( $name =~ q{/} ) {
         my ( $container_name, $service_name ) = split m{/}, $name, 2;
         return $self->get( $container_name )->set( $service_name, $service );
     }
     $self->services->{$name} = $service;
+    return;
 }
 
 =method get_config
@@ -507,11 +513,11 @@ Get the config with the given name, searching inner containers if required
 
 sub get_config {
     my ( $self, $name ) = @_;
-    if ( $name =~ '/' ) {
+    if ( $name =~ q{/} ) {
         my ( $container_name, $service ) = split m{/}, $name, 2;
         my $inner_config = $self->get( $container_name )->get_config( $service );
         # Fix relative references to prefix the container name
-        return { $self->fix_refs( $container_name, %$inner_config ) };
+        return { $self->fix_refs( $container_name, %{$inner_config} ) };
     }
     return $self->config->{$name};
 }
@@ -527,17 +533,17 @@ sub fix_refs {
                 my %new = ();
                 for my $key ( @meta{qw( ref extends )} ) {
                     if ( $arg->{$key} ) {
-                        $new{ $key } = join( "/", $container_name, $arg->{$key} );
+                        $new{ $key } = join( q{/}, $container_name, $arg->{$key} );
                     }
                 }
                 push @out, \%new;
             }
             else {
-                push @out, { $self->fix_refs( $container_name, %$arg ) };
+                push @out, { $self->fix_refs( $container_name, %{$arg} ) };
             }
         }
         elsif ( ref $arg eq 'ARRAY' ) {
-            push @out, [ map { $self->fix_refs( $container_name, $_ ) } @$arg ];
+            push @out, [ map { $self->fix_refs( $container_name, $_ ) } @{$arg} ];
         }
         else {
             push @out, $arg; # simple scalars
@@ -551,10 +557,10 @@ sub parse_args {
     return if not $args;
     my @args;
     if ( ref $args eq 'ARRAY' ) {
-        @args = @$args;
+        @args = @{$args};
     }
     elsif ( ref $args eq 'HASH' ) {
-        @args = %$args;
+        @args = %{$args};
     }
     else {
         # Try anyway?
@@ -602,13 +608,13 @@ sub create_service {
     my $method = $service_info{method} || "new";
     my $service;
     if ( ref $method eq 'ARRAY' ) {
-        for my $m ( @$method ) {
-            my $method = $m->{method};
-            my $return = $m->{return} || '';
+        for my $m ( @{$method} ) {
+            my $method_name = $m->{method};
+            my $return = $m->{return} || q{};
             delete $service_info{args};
             my @args = $self->parse_args( $service_info{class}, $m->{args} );
             my $invocant = $service || $service_info{class};
-            my $output = $invocant->$method( @args );
+            my $output = $invocant->$method_name( @args );
             $service = !$service || $return eq 'chain' ? $output
                      : $service;
         }
@@ -624,11 +630,13 @@ sub merge_config {
     my ( $self, %service_info ) = @_;
     if ( $service_info{ extends } ) {
         my $base_config_ref = $self->get_config( $service_info{extends} );
-        Beam::Wire::Exception::NotFound->throw(
-            name => $service_info{extends},
-            file => $self->file,
-        ) unless $base_config_ref;
-        my %base_config = %$base_config_ref;
+        unless ( $base_config_ref ) { 
+            Beam::Wire::Exception::NotFound->throw(
+                name => $service_info{extends},
+                file => $self->file,
+            );
+        }
+        my %base_config = %{$base_config_ref};
         # Merge the args separately, to be a bit nicer about hashes of arguments
         my $args;
         if ( ref $service_info{args} eq 'HASH' && ref $base_config{args} eq 'HASH' ) {
@@ -655,7 +663,7 @@ sub find_refs {
                 else { # Try to treat it as a service to create
                     my %service_info;
                     my $prefix = $self->meta_prefix;
-                    for my $arg_key ( keys %$arg ) {
+                    for my $arg_key ( keys %{$arg} ) {
                         my $info_key = $arg_key;
                         $info_key =~ s/^\Q$prefix//;
                         $service_info{ $info_key } = $arg->{ $arg_key };
@@ -664,11 +672,11 @@ sub find_refs {
                 }
             }
             else {
-                push @out, { $self->find_refs( %$arg ) };
+                push @out, { $self->find_refs( %{$arg} ) };
             }
         }
         elsif ( ref $arg eq 'ARRAY' ) {
-            push @out, [ map { $self->find_refs( $_ ) } @$arg ];
+            push @out, [ map { $self->find_refs( $_ ) } @{$arg} ];
         }
         else {
             push @out, $arg; # simple scalars
@@ -680,7 +688,7 @@ sub find_refs {
 sub is_meta {
     my ( $self, $arg ) = @_;
     my $prefix = $self->meta_prefix;
-    return all { /^\Q$prefix/ } keys %$arg;
+    return all { /^\Q$prefix/ } keys %{$arg};
 }
 
 sub get_meta_names {
@@ -741,6 +749,7 @@ sub BUILD {
             $self->get($key);
         }
     }
+    return;
 }
 
 =head1 EXCEPTIONS

@@ -1,3 +1,4 @@
+## no critic ( RequireUseStrict RequireUseWarnings )
 {
     "foo" => {
         "class" => "Foo",

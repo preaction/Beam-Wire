@@ -20,6 +20,7 @@ use Beam::Wire;
     sub append {
         my ( $self, $text ) = @_;
         $self->text( join "; ", $self->text, $text );
+        return;
     }
     sub chain {
         my ( $self, %args ) = @_;

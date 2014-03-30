@@ -21,7 +21,7 @@ subtest 'value service: simple scalar' => sub {
 
     my $greeting;
     lives_ok { $greeting = $wire->get( 'greeting' ) };
-    is ref $greeting, '', 'got a simple scalar';
+    is ref $greeting, q{}, 'got a simple scalar';
     is $greeting, 'Hello, World';
 
     my $foo;

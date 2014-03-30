@@ -6,7 +6,7 @@ use Beam::Wire;
 {   package Foo;
     use Moo;
     has foo => is => 'ro';
-    our $singleton;
+    my $singleton;
     sub BUILDARGS {
         my ( $class, @args ) = @_;
         # Support scalar and array constructor args

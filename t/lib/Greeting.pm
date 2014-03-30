@@ -5,7 +5,7 @@ has who => ( is => 'ro' );
 has default => ( is => 'ro' );
 sub greet {
     my ( $self, @who ) = @_;
-    @who = $self->default if !@who;
+    @who ||= $self->default;
     return join ". ", map { sprintf "%s, %s", $self->hello, $_ } @who;
 }
 1;
