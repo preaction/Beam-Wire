@@ -4,7 +4,7 @@ Beam::Wire - A Dependency Injection Container
 
 # VERSION
 
-version 1.000
+version 1.001
 
 # SYNOPSIS
 
@@ -47,7 +47,7 @@ it just requires them and therefore receives them.
 # OVERVIEW
 
 Beam::Wire loads a configuration [file](http://search.cpan.org/perldoc?file) and stores the specified configuration
-in the [config](http://search.cpan.org/perldoc?config) attribute which is used to resolve it's services. This section
+in the [config](#config attribute) which is used to resolve it's services. This section
 will give you an overview of how to declare dependencies and services, and shape
 your configuration file.
 
@@ -296,7 +296,7 @@ added:
 
     my $dbh = $container->get( 'inner/dbh' );
 
-If more control is needed, you can set the [dir](http://search.cpan.org/perldoc?dir) attribute on the parent
+If more control is needed, you can set the [dir](#dir attribute) on the parent
 container. If even more control is needed, you can make a subclass of Beam::Wire.
 
 ### Service/Configuration References
@@ -321,12 +321,12 @@ container. If even more control is needed, you can make a subclass of Beam::Wire
         value: "s3cret"
 
 The reuse of service and configuration containers as arguments for other
-services is encouraged so we have provided a means of referencing those
-objects within your configuration. A reference is an arugment (a service
-argument) in the form of a hashref with a `$ref` key whose value is
-the name of another service. Optionally, this hashref may contain a `$path`
-key whose value is a [Data::DPath](http://search.cpan.org/perldoc?Data::DPath) search string which should return the found
-data structure from within the referenced service.
+services is encouraged so we have provided a means of referencing those objects
+within your configuration. A reference is an arugment (a service argument) in
+the form of a hashref with a `$ref` key whose value is the name of another
+service. Optionally, this hashref may contain a `$path` key whose value is a
+[Data::DPath](http://search.cpan.org/perldoc?Data::DPath) search string which should return the found data
+structure from within the referenced service.
 
 It is also possible to use raw-values as services, this is done by configuring a
 service using a single key/value pair with a `value` key whose value contains
@@ -344,12 +344,13 @@ a single hashref. The keys will become the service names.
 
 The dir attribute contains the directory path to use when searching for inner
 container files. Defaults to the directory which contains the file specified by
-the [file](http://search.cpan.org/perldoc?file) attribute.
+the [file](#file attribute).
 
 ## config
 
 The config attribute contains a hashref of service configurations. This data is
-loaded by [Config::Any](http://search.cpan.org/perldoc?Config::Any) using the file specified by the [file](http://search.cpan.org/perldoc?file) attribute.
+loaded by [Config::Any](http://search.cpan.org/perldoc?Config::Any) using the file specified by the
+[file](#file attribute).
 
 ## services
 

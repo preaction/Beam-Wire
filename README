@@ -2,7 +2,7 @@ NAME
     Beam::Wire - A Dependency Injection Container
 
 VERSION
-    version 1.000
+    version 1.001
 
 SYNOPSIS
         # wire.yml
@@ -44,9 +44,9 @@ DESCRIPTION
 
 OVERVIEW
     Beam::Wire loads a configuration file and stores the specified
-    configuration in the config attribute which is used to resolve it's
-    services. This section will give you an overview of how to declare
-    dependencies and services, and shape your configuration file.
+    configuration in the config which is used to resolve it's services. This
+    section will give you an overview of how to declare dependencies and
+    services, and shape your configuration file.
 
   WHAT IS A DEPENDENCY?
     A dependency is a declaration of a component requirement. In layman's
@@ -285,9 +285,8 @@ OVERVIEW
 
         my $dbh = $container->get( 'inner/dbh' );
 
-    If more control is needed, you can set the dir attribute on the parent
-    container. If even more control is needed, you can make a subclass of
-    Beam::Wire.
+    If more control is needed, you can set the dir on the parent container.
+    If even more control is needed, you can make a subclass of Beam::Wire.
 
    Service/Configuration References
         chi:
@@ -331,12 +330,11 @@ ATTRIBUTES
   dir
     The dir attribute contains the directory path to use when searching for
     inner container files. Defaults to the directory which contains the file
-    specified by the file attribute.
+    specified by the file.
 
   config
     The config attribute contains a hashref of service configurations. This
-    data is loaded by Config::Any using the file specified by the file
-    attribute.
+    data is loaded by Config::Any using the file specified by the file.
 
   services
     A hashref of services. If you have any services already built, add them
