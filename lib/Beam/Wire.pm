@@ -12,7 +12,7 @@ use Config::Any;
 use Class::Load qw( load_class );
 use Data::DPath qw ( dpath );
 use File::Basename qw( dirname );
-use File::Spec::Functions qw( catfile );
+use File::Spec::Functions qw( splitpath catfile );
 use MooX::Types::MooseLike::Base qw( :all );
 use List::MoreUtils qw( all );
 
@@ -370,7 +370,8 @@ has dir => (
     isa     => Str,
     lazy    => 1,
     default => sub {
-        dirname $_[0]->file;
+        my ( $volume, $path, $file ) = splitpath( $_[0]->file );
+        return join "", $volume, $path;
     },
 );
 
