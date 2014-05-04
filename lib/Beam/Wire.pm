@@ -12,7 +12,7 @@ use Config::Any;
 use Class::Load qw( load_class );
 use Data::DPath qw ( dpath );
 use File::Basename qw( dirname );
-use File::Spec::Functions qw( splitpath catfile );
+use File::Spec::Functions qw( splitpath catfile file_name_is_absolute );
 use MooX::Types::MooseLike::Base qw( :all );
 use List::MoreUtils qw( all );
 
@@ -573,7 +573,7 @@ sub parse_args {
         my $config = delete $args{config};
         # Relative subcontainer files should be from the current
         # container's directory
-        if ( exists $args{file} && $args{file} !~ m{^/} ) {
+        if ( exists $args{file} && !file_name_is_absolute( $args{file} ) ) {
             $args{file} = catfile( $self->dir, $args{file} );
         }
         @args = $self->find_refs( %args );
