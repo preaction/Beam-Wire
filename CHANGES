@@ -1,0 +1,69 @@
+Changelog for Beam-Wire
+
+1.004 2014-09-29T05:02:24
+ - Updated dist.ini and rebuilt project.
+ - SurgicalPodWeaver -> PodWeaver
+ - fix incorrect absolute paths on windows
+ - update build artifacts
+ - use splitpath instead of dirname
+ - add contributing docs
+ - fix "Cannot modify private array" in test
+ - changes suggested by my brand-new Perl::Critic configuration
+ - release v1.000
+ - add exceptions using Throwable
+ - ignore build artifacts
+ - fix #28: Cannot extend service from inner container
+ - add error message when service not found
+ - add error message when service extends service that does not exist
+ - allow anonymous services to extend existing services
+ - test cleanup: reduce number of scripts. keep concepts together
+ - move test config files into t/share
+ - clean up tests a bit using Test::Lib
+ - add anonymous services for use as references
+ - refactor find_refs to make the next change a bit easier
+ - refactor parse_args to take only class and args, not entire service hash
+ - add multi-methods and chained methods
+ - do not build a config from file if there is no file
+ - add "eager" services that get created when container is instanciated
+ - don't rely on hash ordering to detect references
+ - add meta prefix to avoid potential collisions with existing data
+   structures
+ - add get() overrides to create anonymous services
+ - add "factory" lifecycle
+ - add some better diagnostics for CPANTESTERS
+ - removed the dependency without removing the unused reference
+ - add Build.PL to the files captured and moved to the repository root
+ - add test dependency on JSON and YAML
+ - add docs on 'extends' attribute
+ - add "extends" for services to inherit properties from other services
+ - move Greeting test class into its own file
+ - too many layers of subtest
+ - allow methods to be called while referencing a service
+ - Test the "args are a non-ref scalar" case
+ - allow value services to be retrieved via get()
+ - updated POD and readme
+ - added support for raw-value services
+ - added test with inlone packages
+ - allow deep references of data structures
+ - loads config files using Config::Any
+ - reformatted distribution and added additional POD
+ - fix: specified the wrong dependency
+ - add the test for method property
+ - update README from POD
+ - add "method" service property to allow for DBI->connect as a constructor
+ - silence a warning when there are no args to parse
+ - v0.005
+ - fix: load the class before trying to create the object
+ - update README from pod
+ - refactor create_service for easier sub-classing
+ - inner container files should be relative based on the parent container
+   dir
+ - rename "sub" containers to "inner"
+ - remove given/when to work on 5.8.9
+ - test arrayref arguments and hashref arguments to increase coverage
+ - test service refs inside subcontainer
+ - document subcontainers
+ - add sub containers
+ - update README for github
+ - a basic dependency injection container
+
