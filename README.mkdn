@@ -1,10 +1,14 @@
 # NAME
 
-Beam::Wire - A Dependency Injection Container
+Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.003
+version 1.004
+
+# STATUS
+
+<a href="https://travis-ci.org/preaction/Beam-Wire"><img src="https://travis-ci.org/preaction/Beam-Wire.svg?branch=master"></a>
 
 # SYNOPSIS
 

@@ -1,4 +1,4 @@
-# ABSTRACT: A Dependency Injection Container
+# ABSTRACT: Lightweight Dependency Injection Container
 
 package Beam::Wire;
 
