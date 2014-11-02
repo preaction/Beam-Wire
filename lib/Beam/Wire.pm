@@ -1,11 +1,8 @@
-# ABSTRACT: A Dependency Injection Container
-
 package Beam::Wire;
+# ABSTRACT: A Dependency Injection Container
 
 use strict;
 use warnings;
-
-# VERSION
 
 use Moo;
 use Config::Any;
