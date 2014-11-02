@@ -38,8 +38,11 @@ my %module_build_args = (
   "test_requires" => {
     "JSON" => 0,
     "Test::Compile" => 0,
+    "Test::Deep" => 0,
+    "Test::Differences" => 0,
+    "Test::Exception" => 0,
     "Test::Lib" => 0,
-    "Test::Most" => 0,
+    "Test::More" => 0,
     "YAML" => 0
   }
 );
@@ -49,8 +52,11 @@ my %fallback_build_requires = (
   "JSON" => 0,
   "Module::Build" => "0.28",
   "Test::Compile" => 0,
+  "Test::Deep" => 0,
+  "Test::Differences" => 0,
+  "Test::Exception" => 0,
   "Test::Lib" => 0,
-  "Test::Most" => 0,
+  "Test::More" => 0,
   "YAML" => 0
 );
 

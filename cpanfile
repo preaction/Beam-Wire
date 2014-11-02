@@ -13,8 +13,11 @@ on 'build' => sub {
 on 'test' => sub {
   requires "JSON" => "0";
   requires "Test::Compile" => "0";
+  requires "Test::Deep" => "0";
+  requires "Test::Differences" => "0";
+  requires "Test::Exception" => "0";
   requires "Test::Lib" => "0";
-  requires "Test::Most" => "0";
+  requires "Test::More" => "0";
   requires "YAML" => "0";
 };
 

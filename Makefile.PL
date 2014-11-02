@@ -35,8 +35,11 @@ my %WriteMakefileArgs = (
   "TEST_REQUIRES" => {
     "JSON" => 0,
     "Test::Compile" => 0,
+    "Test::Deep" => 0,
+    "Test::Differences" => 0,
+    "Test::Exception" => 0,
     "Test::Lib" => 0,
-    "Test::Most" => 0,
+    "Test::More" => 0,
     "YAML" => 0
   },
   "VERSION" => "1.004",
@@ -56,8 +59,11 @@ my %FallbackPrereqs = (
   "Moo" => 0,
   "MooX::Types::MooseLike" => 0,
   "Test::Compile" => 0,
+  "Test::Deep" => 0,
+  "Test::Differences" => 0,
+  "Test::Exception" => 0,
   "Test::Lib" => 0,
-  "Test::Most" => 0,
+  "Test::More" => 0,
   "Throwable" => 0,
   "YAML" => 0
 );

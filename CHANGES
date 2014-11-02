@@ -1,6 +1,9 @@
 Changelog for Beam-Wire
 
-1.004 2014-11-02T22:03:19
+1.004 2014-11-02T22:20:09
+ - remove Contributors plugin from Pod::Weaver
+ - remove Test::Most for the individual modules
+ - update dist.ini and rebuild project
  - SurgicalPodWeaver -> PodWeaver
 
 1.003 2014-05-04T08:26:50
