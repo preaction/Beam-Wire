@@ -1,5 +1,5 @@
 package Beam::Wire;
-# ABSTRACT: A Dependency Injection Container
+# ABSTRACT: Lightweight Dependency Injection Container
 
 use strict;
 use warnings;
