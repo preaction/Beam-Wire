@@ -2,7 +2,7 @@ NAME
     Beam::Wire - A Dependency Injection Container
 
 VERSION
-    version 1.007
+    version 1.008
 
 SYNOPSIS
         # wire.yml

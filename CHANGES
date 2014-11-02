@@ -1,6 +1,10 @@
 Changelog for Beam-Wire
 
-1.007 2014-11-02T23:07:27
+1.008 2014-11-02T23:33:18
+ - fix release not finding CHANGES file
+
+1.007 2014-11-02T23:07:36
+ - release v1.007
  - do not allow dist.ini to be dirty
  - those debug sections of dist.ini did not work
 
@@ -90,8 +94,6 @@ Changelog for Beam-Wire
  - allow deep references of data structures
  - loads config files using Config::Any
  - reformatted distribution and added additional POD
-
-0.008 2013-03-30T02:50:46
  - fix: specified the wrong dependency
 
 0.007 2013-03-28T05:10:49
