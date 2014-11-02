@@ -4,7 +4,11 @@ Beam::Wire - A Dependency Injection Container
 
 # VERSION
 
-version 1.003
+version 1.004
+
+# STATUS
+
+<a href="https://travis-ci.org/preaction/Beam-Wire"><img src="https://travis-ci.org/preaction/Beam-Wire.svg?branch=master"></a>
 
 # SYNOPSIS
 
@@ -46,8 +50,8 @@ it just requires them and therefore receives them.
 
 # OVERVIEW
 
-Beam::Wire loads a configuration [file](http://search.cpan.org/perldoc?file) and stores the specified configuration
-in the [config](#config attribute) which is used to resolve it's services. This section
+Beam::Wire loads a configuration [file](https://metacpan.org/pod/file) and stores the specified configuration
+in the [config](https://metacpan.org/pod/config&#x20;attribute) which is used to resolve it's services. This section
 will give you an overview of how to declare dependencies and services, and shape
 your configuration file.
 
@@ -296,7 +300,7 @@ added:
 
     my $dbh = $container->get( 'inner/dbh' );
 
-If more control is needed, you can set the [dir](#dir attribute) on the parent
+If more control is needed, you can set the [dir](https://metacpan.org/pod/dir&#x20;attribute) on the parent
 container. If even more control is needed, you can make a subclass of Beam::Wire.
 
 ### Service/Configuration References
@@ -325,7 +329,7 @@ services is encouraged so we have provided a means of referencing those objects
 within your configuration. A reference is an arugment (a service argument) in
 the form of a hashref with a `$ref` key whose value is the name of another
 service. Optionally, this hashref may contain a `$path` key whose value is a
-[Data::DPath](http://search.cpan.org/perldoc?Data::DPath) search string which should return the found data
+[Data::DPath](https://metacpan.org/pod/Data::DPath) search string which should return the found data
 structure from within the referenced service.
 
 It is also possible to use raw-values as services, this is done by configuring a
@@ -344,13 +348,13 @@ a single hashref. The keys will become the service names.
 
 The dir attribute contains the directory path to use when searching for inner
 container files. Defaults to the directory which contains the file specified by
-the [file](#file attribute).
+the [file](https://metacpan.org/pod/file&#x20;attribute).
 
 ## config
 
 The config attribute contains a hashref of service configurations. This data is
-loaded by [Config::Any](http://search.cpan.org/perldoc?Config::Any) using the file specified by the
-[file](#file attribute).
+loaded by [Config::Any](https://metacpan.org/pod/Config::Any) using the file specified by the
+[file](https://metacpan.org/pod/file&#x20;attribute).
 
 ## services
 
