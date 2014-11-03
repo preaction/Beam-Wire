@@ -1,5 +1,6 @@
 
-use Test::Most;
+use Test::More;
+use Test::Deep;
 use FindBin qw( $Bin );
 use File::Spec::Functions qw( catfile );
 use Scalar::Util qw( refaddr );

@@ -1,5 +1,8 @@
 
-use Test::Most;
+use Test::More;
+use Test::Deep;
+use Test::Exception;
+
 use Beam::Wire;
 
 subtest "get a service that doesn't exist" => sub {

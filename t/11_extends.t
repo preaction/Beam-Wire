@@ -1,5 +1,7 @@
 
-use Test::Most;
+use Test::More;
+use Test::Exception;
+use Test::Deep;
 use Test::Lib;
 use Beam::Wire;
 

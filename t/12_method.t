@@ -1,5 +1,5 @@
 
-use Test::Most;
+use Test::More;
 use Scalar::Util qw( refaddr );
 
 use Beam::Wire;
