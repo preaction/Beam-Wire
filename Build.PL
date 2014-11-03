@@ -14,13 +14,13 @@ my %module_build_args = (
     "ExtUtils::MakeMaker" => 0,
     "Module::Build" => "0.28"
   },
-  "dist_abstract" => "A Dependency Injection Container",
+  "dist_abstract" => "Lightweight Dependency Injection Container",
   "dist_author" => [
     "Doug Bell <preaction\@cpan.org>",
     "Al Newkirk <anewkirk\@ana.io>"
   ],
   "dist_name" => "Beam-Wire",
-  "dist_version" => "1.008",
+  "dist_version" => "1.009",
   "license" => "perl",
   "module_name" => "Beam::Wire",
   "recommends" => {},

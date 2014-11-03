@@ -1,6 +1,12 @@
 Changelog for Beam-Wire
 
-1.008 2014-11-02T23:33:18
+1.009 2014-11-03T00:07:31
+ - fully excise Test::Most
+ - add comments to dist.ini
+ - update abstract with what kind of DI we are
+
+1.008 2014-11-02T23:33:29
+ - release v1.008
  - fix release not finding CHANGES file
 
 1.007 2014-11-02T23:07:36

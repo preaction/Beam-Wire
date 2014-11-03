@@ -1,10 +1,10 @@
 # NAME
 
-Beam::Wire - A Dependency Injection Container
+Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.008
+version 1.009
 
 # STATUS
 

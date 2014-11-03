@@ -10,7 +10,7 @@ use ExtUtils::MakeMaker ;
 
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "A Dependency Injection Container",
+  "ABSTRACT" => "Lightweight Dependency Injection Container",
   "AUTHOR" => "Doug Bell <preaction\@cpan.org>, Al Newkirk <anewkirk\@ana.io>",
   "BUILD_REQUIRES" => {
     "Module::Build" => "0.28"
@@ -42,7 +42,7 @@ my %WriteMakefileArgs = (
     "Test::More" => 0,
     "YAML" => 0
   },
-  "VERSION" => "1.008",
+  "VERSION" => "1.009",
   "test" => {
     "TESTS" => "t/*.t"
   }
