@@ -341,7 +341,7 @@ the raw-value you wish to reuse.
 
 =cut
 
-=attribute file
+=attr file
 
 The file attribute contains the file path of the file where Beam::Wire container
 services are configured (typically a YAML file). The file's contents should form
@@ -354,7 +354,7 @@ has file => (
     isa     => Str,
 );
 
-=attribute dir
+=attr dir
 
 The dir attribute contains the directory path to use when searching for inner
 container files. Defaults to the directory which contains the file specified by
@@ -372,7 +372,7 @@ has dir => (
     },
 );
 
-=attribute config
+=attr config
 
 The config attribute contains a hashref of service configurations. This data is
 loaded by L<Config::Any|Config::Any> using the file specified by the
@@ -397,7 +397,7 @@ sub _build_config {
     return "HASH" eq ref $loader ? (values(%{$loader}))[0] : {};
 }
 
-=attribute services
+=attr services
 
 A hashref of services. If you have any services already built, add them here.
 
@@ -416,7 +416,7 @@ sub _build_services {
     return $services;
 }
 
-=attribute meta_prefix
+=attr meta_prefix
 
 The character that begins a meta-property inside of a service's C<args>. This
 includes C<$ref>, C<$path>, C<$method>, and etc...
