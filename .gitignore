@@ -1,7 +1,7 @@
 .build
 *.swp
 *.tar.gz
-Beam-Wire-*
+/Beam-Wire-*
 eg
 Build
 MYMETA.json
