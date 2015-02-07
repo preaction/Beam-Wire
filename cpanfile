@@ -1,6 +1,6 @@
 requires "Class::Load" => "0";
 requires "Config::Any" => "0.23";
-requires "Data::DPath" => "0.49";
+requires "Data::DPath" => "0.51";
 requires "List::MoreUtils" => "0";
 requires "Moo" => "0";
 requires "MooX::Types::MooseLike" => "0";
@@ -11,14 +11,21 @@ on 'build' => sub {
 };
 
 on 'test' => sub {
+  requires "File::Spec" => "0";
+  requires "IO::Handle" => "0";
+  requires "IPC::Open3" => "0";
   requires "JSON" => "0";
-  requires "Test::Compile" => "0";
   requires "Test::Deep" => "0";
   requires "Test::Differences" => "0";
   requires "Test::Exception" => "0";
   requires "Test::Lib" => "0";
   requires "Test::More" => "0";
   requires "YAML" => "0";
+};
+
+on 'test' => sub {
+  recommends "CPAN::Meta" => "0";
+  recommends "CPAN::Meta::Requirements" => "2.120900";
 };
 
 on 'configure' => sub {

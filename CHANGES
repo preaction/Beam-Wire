@@ -1,29 +1,45 @@
 Changelog for Beam-Wire
 
-1.009 2014-11-03T00:07:31
+1.010 2015-02-07T21:55:50
+ - update Data::DPath to fix warning on perl 5.20
+ - add dzil plugin for prereqs and compile tests
+ - remove root dotfiles and root ini files from dist
+ - switch to dzil Git::GatherDir
+ - fix mailmap only supports one e-mail map per line
+ - fix contributors dependency
+ - add link to #beam on irc.perl.org
+ - update copyright year
+ - add contributors dzil plugin for proper attribution
+ - only ignore bundles in the dist root
+ - only remove .ini files from the dist root
+ - add dzil tag annotation with name, date, and changelog
+ - allow cpanfile to be dirty
+ - update weaver.ini from new skeleton
+
+1.009 2014-11-03T00:07:31Z
  - fully excise Test::Most
  - add comments to dist.ini
  - update abstract with what kind of DI we are
 
-1.008 2014-11-02T23:33:29
+1.008 2014-11-02T23:33:29Z
  - release v1.008
  - fix release not finding CHANGES file
 
-1.007 2014-11-02T23:07:36
+1.007 2014-11-02T23:07:36Z
  - release v1.007
  - do not allow dist.ini to be dirty
  - those debug sections of dist.ini did not work
 
-1.006 2014-11-02T23:01:55
+1.006 2014-11-02T23:01:55Z
  - set up debug sections for easier DZ debugging
  - add debug sections to dist.ini
  - try to build the CHANGES file at the right time
 
-1.005 2014-11-02T22:38:24
+1.005 2014-11-02T22:38:24Z
  - release v1.005
  - create the changes file before trying to commit it
 
-1.004 2014-11-02T22:36:27
+1.004 2014-11-02T22:36:27Z
  - release v1.004
  - more cleanup to align with standards and practices
  - add coveralls badge and rebuild project
@@ -32,20 +48,20 @@ Changelog for Beam-Wire
  - update dist.ini and rebuild project
  - SurgicalPodWeaver -> PodWeaver
 
-1.003 2014-05-04T08:26:50
+1.003 2014-05-04T08:26:50Z
  - fix incorrect absolute paths on windows
 
-1.002 2014-05-03T03:44:57
+1.002 2014-05-03T03:44:57Z
  - update build artifacts
  - use splitpath instead of dirname
 
-1.001 2014-04-28T04:13:42
+1.001 2014-04-28T04:13:42Z
  - add contributing docs
  - update build artifacts
  - fix "Cannot modify private array" in test
  - changes suggested by my brand-new Perl::Critic configuration
 
-1.000 2013-08-02T19:53:11
+1.000 2013-08-02T19:53:11Z
  - release v1.000
  - add exceptions using Throwable
  - ignore build artifacts
@@ -53,7 +69,7 @@ Changelog for Beam-Wire
  - add error message when service not found
  - add error message when service extends service that does not exist
 
-0.016 2013-07-26T12:59:19
+0.016 2013-07-26T12:59:19Z
  - allow anonymous services to extend existing services
  - test cleanup: reduce number of scripts. keep concepts together
  - move test config files into t/share
@@ -63,30 +79,30 @@ Changelog for Beam-Wire
  - refactor parse_args to take only class and args, not entire service hash
  - add multi-methods and chained methods
 
-0.015 2013-07-06T01:35:27
+0.015 2013-07-06T01:35:27Z
  - do not build a config from file if there is no file
  - add "eager" services that get created when container is instanciated
 
-0.014 2013-06-02T20:37:10
+0.014 2013-06-02T20:37:10Z
  - don't rely on hash ordering to detect references
  - add meta prefix to avoid potential collisions with existing data
    structures
  - add get() overrides to create anonymous services
 
-0.013 2013-05-21T19:42:16
+0.013 2013-05-21T19:42:16Z
  - add "factory" lifecycle
 
-0.012 2013-05-19T18:23:51
+0.012 2013-05-19T18:23:51Z
  - add some better diagnostics for CPANTESTERS
 
-0.011 2013-05-19T03:50:37
+0.011 2013-05-19T03:50:37Z
  - removed the dependency without removing the unused reference
 
-0.010 2013-05-19T03:41:39
+0.010 2013-05-19T03:41:39Z
  - add Build.PL to the files captured and moved to the repository root
  - add test dependency on JSON and YAML
 
-0.009 2013-05-10T02:39:26
+0.009 2013-05-10T02:39:26Z
  - add docs on 'extends' attribute
  - add "extends" for services to inherit properties from other services
  - move Greeting test class into its own file
@@ -102,35 +118,35 @@ Changelog for Beam-Wire
  - reformatted distribution and added additional POD
  - fix: specified the wrong dependency
 
-0.007 2013-03-28T05:10:49
+0.007 2013-03-28T05:10:49Z
  - add the test for method property
  - update README from POD
  - add "method" service property to allow for DBI->connect as a constructor
 
-0.006 2013-03-26T21:01:11
+0.006 2013-03-26T21:01:11Z
  - silence a warning when there are no args to parse
 
-0.005 2013-03-26T20:41:27
+0.005 2013-03-26T20:41:27Z
  - fix: load the class before trying to create the object
 
-0.004 2013-03-26T00:19:00
+0.004 2013-03-26T00:19:00Z
  - update README from pod
  - refactor create_service for easier sub-classing
  - inner container files should be relative based on the parent container
    dir
  - rename "sub" containers to "inner"
 
-0.003 2013-03-11T03:57:09
+0.003 2013-03-11T03:57:09Z
  - remove given/when to work on 5.8.9
 
-0.002 2013-03-10T07:44:17
+0.002 2013-03-10T07:44:17Z
  - update README from POD
  - test arrayref arguments and hashref arguments to increase coverage
  - test service refs inside subcontainer
  - document subcontainers
  - add sub containers
 
-0.001 2013-03-10T00:55:49
+0.001 2013-03-10T00:55:49Z
  - update README for github
  - a basic dependency injection container
 
