@@ -10,7 +10,7 @@ use Class::Load qw( load_class );
 use Data::DPath qw ( dpath );
 use File::Basename qw( dirname );
 use File::Spec::Functions qw( splitpath catfile file_name_is_absolute );
-use MooX::Types::MooseLike::Base qw( :all );
+use Types::Standard qw( :all );
 use List::MoreUtils qw( all );
 
 =head1 SYNOPSIS
@@ -774,7 +774,7 @@ An exception with service information inside
 
 package Beam::Wire::Exception::Service;
 use Moo;
-use MooX::Types::MooseLike::Base qw( :all );
+use Types::Standard qw( :all );
 extends 'Beam::Wire::Exception';
 
 has name => (
