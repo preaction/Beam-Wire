@@ -245,6 +245,29 @@ An C<eager> value will be created as soon as the container is created. If you
 have an object that registers itself upon instantiation, you can make sure your
 object is created as soon as possible by doing C<lifecycle: eager>.
 
+=head4 on
+
+Attach event listeners using L<Beam::Emitter|Beam::Emitter>.
+
+    emitter:
+        class: My::Emitter
+        on:
+            before_my_event:
+                $ref: listener
+                $method: on_before_my_event
+            my_event:
+                - $ref: listener
+                  $method: on_my_event
+                - $ref: other_listener
+                  $method: on_my_event
+    listener:
+        class: My::Listener
+    other_listener:
+        class: My::Listener
+
+Now, when the C<emitter> fires off its events, they are dispatched to the
+appropriate listeners.
+
 =head3 Inner Containers
 
 Beam::Wire objects can hold other Beam::Wire objects!
@@ -620,6 +643,26 @@ sub create_service {
         my @args = $self->parse_args( @service_info{"class","args"} );
         $service = $service_info{class}->$method( @args );
     }
+
+    if ( $service_info{on} ) {
+        my %meta = $self->get_meta_names;
+        for my $event ( keys %{ $service_info{on} } ) {
+            my @listeners   = ref $service_info{on}{$event} eq 'ARRAY'
+                            ? @{ $service_info{on}{$event} }
+                            : $service_info{on}{$event}
+                            ;
+
+            for my $listener ( @listeners ) {
+                # XXX: Make $class and $extends work here
+                # XXX: Make $args prepend arguments to the listener
+                # XXX: Make $args also resolve refs
+                my $method = $listener->{ $meta{method} };
+                my $listen_svc = $self->get( $listener->{ $meta{ref} } );
+                $service->on( $event => sub { $listen_svc->$method( @_ ) } );
+            }
+        }
+    }
+
     return $service;
 }
 
