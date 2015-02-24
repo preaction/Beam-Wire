@@ -6,7 +6,7 @@ use warnings;
 
 use Moo;
 use Config::Any;
-use Class::Load qw( load_class );
+use Module::Runtime qw( use_module );
 use Data::DPath qw ( dpath );
 use File::Basename qw( dirname );
 use File::Spec::Functions qw( splitpath catfile file_name_is_absolute );
@@ -602,7 +602,7 @@ sub create_service {
     if ( $service_info{value} ) {
         return $service_info{value};
     }
-    load_class( $service_info{class} );
+    use_module( $service_info{class} );
     my $method = $service_info{method} || "new";
     my $service;
     if ( ref $method eq 'ARRAY' ) {
