@@ -11,7 +11,6 @@ use Data::DPath qw ( dpath );
 use File::Basename qw( dirname );
 use File::Spec::Functions qw( splitpath catfile file_name_is_absolute );
 use Types::Standard qw( :all );
-use List::MoreUtils qw( all );
 
 =head1 SYNOPSIS
 
@@ -686,7 +685,7 @@ sub find_refs {
 sub is_meta {
     my ( $self, $arg ) = @_;
     my $prefix = $self->meta_prefix;
-    return all { /^\Q$prefix/ } keys %{$arg};
+    return !grep { !/^\Q$prefix/ } keys %{$arg};
 }
 
 sub get_meta_names {
