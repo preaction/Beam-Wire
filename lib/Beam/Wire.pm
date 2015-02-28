@@ -8,6 +8,7 @@ use Moo;
 use Config::Any;
 use Module::Runtime qw( use_module );
 use Data::DPath qw ( dpath );
+use Path::Tiny qw( path );
 use File::Basename qw( dirname );
 use File::Spec::Functions qw( splitpath catfile file_name_is_absolute );
 use Types::Standard qw( :all );
@@ -268,6 +269,65 @@ Attach event listeners using L<Beam::Emitter|Beam::Emitter>.
 Now, when the C<emitter> fires off its events, they are dispatched to the
 appropriate listeners.
 
+=head3 Config Services
+
+A config service allows you to read a config file and use it as a service, giving
+all or part of it to other objects in your container.
+
+To create a config service, use the C<config> key. The value is the path to the
+file to read. By default, YAML, JSON, XML, and Perl files are supported (via
+L<Config::Any>).
+
+    # db_config.yml
+    dsn: 'dbi:mysql:dbname'
+    user: 'mysql'
+    pass: '12345'
+
+    # container.yml
+    db_config:
+        config: db_config.yml
+
+You can pass in the entire config to an object using C<$ref>:
+
+    # container.yml
+    db_config:
+        config: db_config.yml
+    dbobj:
+        class: My::DB
+        args:
+            conf:
+                $ref: db_config
+
+If you only need the config file once, you can create an anonymous config
+object.
+
+    # container.yml
+    dbobj:
+        class: My::DB
+        args:
+            conf:
+                $config: db_config.yml
+
+You can reference individual items in a configuration hash using C<$path>
+references:
+
+    # container.yml
+    db_config:
+        config: db_config.yml
+    dbh:
+        class: DBI
+        method: connect
+        args:
+            - $ref: db_config
+              $path: /dsn
+            - $ref: db_config
+              $path: /user
+            - $ref: db_config
+              $path: /pass
+
+B<NOTE:> You cannot use C<$path> and anonymous config objects.
+
+
 =head3 Inner Containers
 
 Beam::Wire objects can hold other Beam::Wire objects!
@@ -412,11 +472,7 @@ has config => (
 sub _build_config {
     my ( $self ) = @_;
     return {} if ( !$self->file );
-    local $Config::Any::YAML::NO_YAML_XS_WARNING = 1;
-    my $loader = Config::Any->load_files( {
-        files  => [$self->file], use_ext => 1, flatten_to_hash => 1
-    } );
-    return "HASH" eq ref $loader ? (values(%{$loader}))[0] : {};
+    return $self->_load_config( $self->file );
 }
 
 =attr services
@@ -624,6 +680,15 @@ sub create_service {
     if ( $service_info{value} ) {
         return $service_info{value};
     }
+
+    if ( $service_info{config} ) {
+        my $conf_path = path( $service_info{config} );
+        if ( $self->file ) {
+            $conf_path = path( $self->file )->parent->child( $conf_path );
+        }
+        return $self->_load_config( "$conf_path" );
+    }
+
     use_module( $service_info{class} );
     my $method = $service_info{method} || "new";
     my $service;
@@ -790,6 +855,16 @@ sub BUILD {
         }
     }
     return;
+}
+
+# Load a config file
+sub _load_config {
+    my ( $self, $path ) = @_;
+    local $Config::Any::YAML::NO_YAML_XS_WARNING = 1;
+    my $loader = Config::Any->load_files( {
+        files  => [$path], use_ext => 1, flatten_to_hash => 1
+    } );
+   return "HASH" eq ref $loader ? (values(%{$loader}))[0] : {};
 }
 
 =head1 EXCEPTIONS
