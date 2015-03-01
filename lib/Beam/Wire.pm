@@ -873,6 +873,15 @@ Create a new container.
 
 sub BUILD {
     my ( $self ) = @_;
+
+    if ( $self->file && !path( $self->file )->exists ) {
+        my $file = $self->file;
+        Beam::Wire::Exception::Constructor->throw(
+            attr => 'file',
+            error => qq{Container file '$file' does not exist},
+        );
+    }
+
     # Create all the eager services
     for my $key ( keys %{ $self->config } ) {
         my $config = $self->config->{$key};
@@ -908,6 +917,30 @@ The base exception class
 package Beam::Wire::Exception;
 use Moo;
 with 'Throwable';
+use Types::Standard qw( :all );
+use overload q{""} => sub { $_[0]->error };
+
+has error => (
+    is => 'ro',
+    isa => Str,
+);
+
+=head2 Beam::Wire::Exception::Constructor
+
+An exception creating a Beam::Wire object
+
+=cut
+
+package Beam::Wire::Exception::Constructor;
+use Moo;
+use Types::Standard qw( :all );
+extends 'Beam::Wire::Exception';
+
+has attr => (
+    is => 'ro',
+    isa => Str,
+    required => 1,
+);
 
 =head2 Beam::Wire::Exception::Service
 

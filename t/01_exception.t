@@ -1,9 +1,16 @@
 
+use strict;
+use warnings;
 use Test::More;
 use Test::Deep;
 use Test::Exception;
 
 use Beam::Wire;
+
+subtest 'config file does not exist' => sub {
+    throws_ok { Beam::Wire->new( file => 'DOES_NOT_EXIST.yml' ) } 'Beam::Wire::Exception::Constructor';
+    like $@, qr{\QContainer file 'DOES_NOT_EXIST.yml' does not exist}, 'stringifies';
+};
 
 subtest "get a service that doesn't exist" => sub {
     my $wire = Beam::Wire->new;
