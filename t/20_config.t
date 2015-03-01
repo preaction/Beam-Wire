@@ -51,6 +51,12 @@ my @paths = map {; $_, "$_" }
 
 for my $path ( @paths ) {
     subtest "load module from config - $path " . ref($path) => sub {
+        my ( $ext ) = $path =~ /[.]([^.]+)$/;
+        if ( $ext eq 'json' && !eval { require JSON; 1 } ) {
+            pass "Can't load json for config: $@";
+            return;
+        }
+
         my $wire = Beam::Wire->new( file => $path );
         my $foo = $wire->get('foo');
         isa_ok $foo, 'Foo';
