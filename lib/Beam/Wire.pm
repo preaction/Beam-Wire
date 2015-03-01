@@ -701,6 +701,7 @@ sub create_service {
         Beam::Wire::Exception::InvalidConfig->throw(
             name => $name,
             file => $self->file,
+            error => '"value" cannot be used with "class" or "extends"',
         );
     }
     if ( $service_info{value} ) {
@@ -974,6 +975,16 @@ package Beam::Wire::Exception::NotFound;
 use Moo;
 extends 'Beam::Wire::Exception::Service';
 
+has '+error' => (
+    lazy => 1,
+    default => sub {
+        my ( $self ) = @_;
+        my $name = $self->name;
+        my $file = $self->file;
+        return "Service '$name' not found" . ( $file ? " in file '$file'" : '' );
+    },
+);
+
 =head2 Beam::Wire::Exception::InvalidConfig
 
 The configuration is invalid:
@@ -991,5 +1002,15 @@ Both "value" and "class" or "extends" are defined. These are mutually-exclusive.
 package Beam::Wire::Exception::InvalidConfig;
 use Moo;
 extends 'Beam::Wire::Exception::Service';
+use overload q{""} => sub {
+    my ( $self ) = @_;
+    my $file = $self->file;
+
+    sprintf "Invalid config for service '%s': %s%s",
+        $self->name,
+        $self->error,
+        ( $file ? " in file '$file'" : "" ),
+        ;
+};
 
 1;
