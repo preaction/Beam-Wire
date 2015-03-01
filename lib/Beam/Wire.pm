@@ -11,7 +11,6 @@ use Module::Runtime qw( use_module );
 use Data::DPath qw ( dpath );
 use Path::Tiny qw( path );
 use File::Basename qw( dirname );
-use File::Spec::Functions qw( splitpath catfile file_name_is_absolute );
 use Types::Standard qw( :all );
 
 =head1 SYNOPSIS
@@ -450,7 +449,13 @@ a single hashref. The keys will become the service names.
 
 has file => (
     is      => 'ro',
-    isa     => Str,
+    isa     => InstanceOf['Path::Tiny'],
+    coerce => sub {
+        if ( !blessed $_[0] || !$_[0]->isa('Path::Tiny') ) {
+            return path( $_[0] );
+        }
+        return $_[0];
+    },
 );
 
 =attr dir
@@ -463,11 +468,14 @@ the L<file|file attribute>.
 
 has dir => (
     is      => 'ro',
-    isa     => Str,
+    isa     => InstanceOf['Path::Tiny'],
     lazy    => 1,
-    default => sub {
-        my ( $volume, $path, $file ) = splitpath( $_[0]->file );
-        return join "", $volume, $path;
+    default => sub { $_[0]->file->parent },
+    coerce => sub {
+        if ( !blessed $_[0] || !$_[0]->isa('Path::Tiny') ) {
+            return path( $_[0] );
+        }
+        return $_[0];
     },
 );
 
@@ -660,8 +668,8 @@ sub parse_args {
             my $config = delete $args{config};
             # Relative subcontainer files should be from the current
             # container's directory
-            if ( exists $args{file} && !file_name_is_absolute( $args{file} ) ) {
-                $args{file} = catfile( $self->dir, $args{file} );
+            if ( exists $args{file} && !path( $args{file} )->is_absolute ) {
+                $args{file} = $self->dir->child( $args{file} );
             }
             @args = $self->find_refs( %args );
             if ( $config ) {
@@ -962,7 +970,7 @@ has name => (
 
 has file => (
     is          => 'ro',
-    isa         => Maybe[Str],
+    isa         => Maybe[InstanceOf['Path::Tiny']],
 );
 
 =head2 Beam::Wire::Exception::NotFound
