@@ -75,6 +75,25 @@ subtest 'anonymous configs' => sub {
     lives_ok { $svc = $wire->get( 'foo' ) };
     isa_ok $svc, 'Foo';
     cmp_deeply $svc->foo, $EXPECT;
+
+    subtest 'use a config as all the arguments' => sub {
+        my $wire = Beam::Wire->new(
+            config => {
+                foo => {
+                    class => 'Foo',
+                    args  => {
+                        '$config' => $SHARE_DIR->child( config => 'config.yml' )->stringify,
+                    },
+                },
+            },
+        );
+
+        my $svc;
+        lives_ok { $svc = $wire->get( 'foo' ) };
+        isa_ok $svc, 'Foo';
+        cmp_deeply $svc->foo, $EXPECT->{foo};
+
+    };
 };
 
 subtest 'config references' => sub {

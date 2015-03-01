@@ -4,6 +4,7 @@ package Beam::Wire;
 use strict;
 use warnings;
 
+use Scalar::Util qw( blessed );
 use Moo;
 use Config::Any;
 use Module::Runtime qw( use_module );
@@ -307,6 +308,22 @@ object.
         args:
             conf:
                 $config: db_config.yml
+
+The config file can be used as all the arguments to the service:
+
+    # container.yml
+    dbobj:
+        class: My::DB
+        args:
+            $config: db_config.yml
+
+In this example, the constructor will be called like:
+
+    my $dbobj = My::DB->new(
+        dsn => 'dbi:mysql:dbname',
+        user => 'mysql',
+        pass => '12345',
+    );
 
 You can reference individual items in a configuration hash using C<$path>
 references:
@@ -633,32 +650,41 @@ sub parse_args {
     return if not $args;
     my @args;
     if ( ref $args eq 'ARRAY' ) {
-        @args = @{$args};
+        @args = $self->find_refs( @{$args} );
     }
     elsif ( ref $args eq 'HASH' ) {
-        @args = %{$args};
+        # Hash args could be a ref
+        # Subcontainers cannot scan for refs in their configs
+        if ( $class->isa( 'Beam::Wire' ) ) {
+            my %args = %{$args};
+            my $config = delete $args{config};
+            # Relative subcontainer files should be from the current
+            # container's directory
+            if ( exists $args{file} && !file_name_is_absolute( $args{file} ) ) {
+                $args{file} = catfile( $self->dir, $args{file} );
+            }
+            @args = $self->find_refs( %args );
+            if ( $config ) {
+                push @args, config => $config;
+            }
+        }
+        else {
+            my ( $maybe_ref ) = $self->find_refs( $args );
+            if ( blessed $maybe_ref ) {
+                @args = ( $maybe_ref );
+            }
+            else {
+                @args   = ref $maybe_ref eq 'HASH' ? %$maybe_ref
+                        : ref $maybe_ref eq 'ARRAY' ? @$maybe_ref
+                        : ( $maybe_ref );
+            }
+        }
     }
     else {
         # Try anyway?
         @args = $args;
     }
-    if ( $class->isa( 'Beam::Wire' ) ) {
-        my %args = @args;
-        # Subcontainers cannot scan for refs in their configs
-        my $config = delete $args{config};
-        # Relative subcontainer files should be from the current
-        # container's directory
-        if ( exists $args{file} && !file_name_is_absolute( $args{file} ) ) {
-            $args{file} = catfile( $self->dir, $args{file} );
-        }
-        @args = $self->find_refs( %args );
-        if ( $config ) {
-            push @args, config => $config;
-        }
-    }
-    else {
-        @args = $self->find_refs( @args );
-    }
+
     return @args;
 }
 
