@@ -269,6 +269,22 @@ Attach event listeners using L<Beam::Emitter|Beam::Emitter>.
 Now, when the C<emitter> fires off its events, they are dispatched to the
 appropriate listeners.
 
+In order to work around a bug in YAML.pm, you can also specify event listeners
+as an array of hashes:
+
+    emitter:
+        class: My::Emitter
+        on:
+            - before_my_event:
+                $ref: listener
+                $method: on_before_my_event
+            - my_event:
+                $ref: listener
+                $method: on_my_event
+            - my_event:
+                $ref: other_listener
+                $method: on_my_event
+
 =head3 Config Services
 
 A config service allows you to read a config file and use it as a service, giving
@@ -746,20 +762,32 @@ sub create_service {
 
     if ( $service_info{on} ) {
         my %meta = $self->get_meta_names;
-        for my $event ( keys %{ $service_info{on} } ) {
-            my @listeners   = ref $service_info{on}{$event} eq 'ARRAY'
-                            ? @{ $service_info{on}{$event} }
-                            : $service_info{on}{$event}
-                            ;
+        my @listeners;
 
-            for my $listener ( @listeners ) {
-                # XXX: Make $class and $extends work here
-                # XXX: Make $args prepend arguments to the listener
-                # XXX: Make $args also resolve refs
-                my $method = $listener->{ $meta{method} };
-                my $listen_svc = $self->get( $listener->{ $meta{ref} } );
-                $service->on( $event => sub { $listen_svc->$method( @_ ) } );
+        if ( ref $service_info{on} eq 'ARRAY' ) {
+            @listeners = map { [ %$_ ] } @{ $service_info{on} };
+        }
+        elsif ( ref $service_info{on} eq 'HASH' ) {
+            for my $event ( keys %{ $service_info{on} } ) {
+                if ( ref $service_info{on}{$event} eq 'ARRAY' ) {
+                    push @listeners,
+                        map {; [ $event => $_ ] }
+                        @{ $service_info{on}{$event} };
+                }
+                else {
+                    push @listeners, [ $event => $service_info{on}{$event} ];
+                }
             }
+        }
+
+        for my $listener ( @listeners ) {
+            my ( $event, $conf ) = @$listener;
+            # XXX: Make $class and $extends work here
+            # XXX: Make $args prepend arguments to the listener
+            # XXX: Make $args also resolve refs
+            my $method = $conf->{ $meta{method} };
+            my $listen_svc = $self->get( $conf->{ $meta{ref} } );
+            $service->on( $event => sub { $listen_svc->$method( @_ ) } );
         }
     }
 

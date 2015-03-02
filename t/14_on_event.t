@@ -31,39 +31,82 @@ subtest 'single event listener' => sub {
 };
 
 subtest 'multiple event listeners' => sub {
-    my $wire = Beam::Wire->new(
-        config => {
-            emitter => {
-                class => 'My::Emitter',
-                on => {
-                    greet => [
+
+    subtest 'hash of arrays, the logical way, that we will keep' => sub {
+        my $wire = Beam::Wire->new(
+            config => {
+                emitter => {
+                    class => 'My::Emitter',
+                    on => {
+                        greet => [
+                            {
+                                '$ref' => 'listener',
+                                '$method' => 'on_greet',
+                            },
+                            {
+                                '$ref' => 'other_listener',
+                                '$method' => 'on_greet',
+                            },
+                        ],
+                    },
+                },
+                listener => {
+                    class => 'My::Listener',
+                },
+                other_listener => {
+                    class => 'My::Listener',
+                },
+            },
+        );
+
+        my $svc;
+        lives_ok { $svc = $wire->get( 'emitter' ) };
+        isa_ok $svc, 'My::Emitter';
+
+        $svc->emit( 'greet' );
+        is $wire->get( 'listener' )->events_seen, 1;
+        is $wire->get( 'other_listener' )->events_seen, 1;
+    };
+
+    subtest 'array of hashes, less logical, to get around a YAML.pm bug' => sub {
+        my $wire = Beam::Wire->new(
+            config => {
+                emitter => {
+                    class => 'My::Emitter',
+                    on => [
                         {
-                            '$ref' => 'listener',
-                            '$method' => 'on_greet',
+                            greet => {
+                                '$ref' => 'listener',
+                                '$method' => 'on_greet',
+                            },
                         },
                         {
-                            '$ref' => 'other_listener',
-                            '$method' => 'on_greet',
+                            greet => {
+                                '$ref' => 'other_listener',
+                                '$method' => 'on_greet',
+                            },
                         },
                     ],
                 },
+                listener => {
+                    class => 'My::Listener',
+                },
+                other_listener => {
+                    class => 'My::Listener',
+                },
             },
-            listener => {
-                class => 'My::Listener',
-            },
-            other_listener => {
-                class => 'My::Listener',
-            },
-        },
-    );
+        );
 
-    my $svc;
-    lives_ok { $svc = $wire->get( 'emitter' ) };
-    isa_ok $svc, 'My::Emitter';
+        my $svc;
+        lives_ok { $svc = $wire->get( 'emitter' ) };
+        isa_ok $svc, 'My::Emitter';
 
-    $svc->emit( 'greet' );
-    is $wire->get( 'listener' )->events_seen, 1;
-    is $wire->get( 'other_listener' )->events_seen, 1;
+        $svc->emit( 'greet' );
+        is $wire->get( 'listener' )->events_seen, 1;
+        is $wire->get( 'other_listener' )->events_seen, 1;
+
+    };
+
 };
 
 done_testing;
