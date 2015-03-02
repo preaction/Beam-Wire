@@ -3,6 +3,7 @@ use Test::More;
 use Test::Exception;
 use Test::Lib;
 use Beam::Wire;
+use My::Listener;
 
 subtest 'single event listener' => sub {
     my $wire = Beam::Wire->new(
@@ -108,5 +109,59 @@ subtest 'multiple event listeners' => sub {
     };
 
 };
+
+subtest 'anonymous listeners' => sub {
+
+    subtest '$class' => sub {
+        my $wire = Beam::Wire->new(
+            config => {
+                emitter => {
+                    class => 'My::Emitter',
+                    on => {
+                        greet => {
+                            '$class' => 'My::Listener',
+                            '$method' => 'on_greet',
+                        },
+                    },
+                },
+            },
+        );
+
+        my $svc;
+        lives_ok { $svc = $wire->get( 'emitter' ) };
+        isa_ok $svc, 'My::Emitter';
+
+        $svc->emit( 'greet' );
+        is $My::Listener::LAST_CREATED->events_seen, 1;
+    };
+
+    subtest '$extends' => sub {
+        my $wire = Beam::Wire->new(
+            config => {
+                emitter => {
+                    class => 'My::Emitter',
+                    on => {
+                        greet => {
+                            '$extends' => 'listener',
+                            '$method' => 'on_greet',
+                        },
+                    },
+                },
+                listener => {
+                    class => 'My::Listener',
+                },
+            },
+        );
+
+        my $svc;
+        lives_ok { $svc = $wire->get( 'emitter' ) };
+        isa_ok $svc, 'My::Emitter';
+
+        $svc->emit( 'greet' );
+        is $My::Listener::LAST_CREATED->events_seen, 1;
+    };
+
+};
+
 
 done_testing;

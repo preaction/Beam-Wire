@@ -3,6 +3,12 @@ package
 
 use Moo;
 
+our $LAST_CREATED;
+
+sub BUILD {
+    $LAST_CREATED = $_[0];
+}
+
 has events_seen => (
     is => 'rw',
     default => sub { 0 },

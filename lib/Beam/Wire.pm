@@ -782,11 +782,10 @@ sub create_service {
 
         for my $listener ( @listeners ) {
             my ( $event, $conf ) = @$listener;
-            # XXX: Make $class and $extends work here
             # XXX: Make $args prepend arguments to the listener
             # XXX: Make $args also resolve refs
-            my $method = $conf->{ $meta{method} };
-            my $listen_svc = $self->get( $conf->{ $meta{ref} } );
+            my $method = delete $conf->{ $meta{method} };
+            my ( $listen_svc ) = $self->find_refs( $conf );
             $service->on( $event => sub { $listen_svc->$method( @_ ) } );
         }
     }
