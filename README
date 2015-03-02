@@ -2,7 +2,7 @@ NAME
     Beam::Wire - Lightweight Dependency Injection Container
 
 VERSION
-    version 1.010
+    version 1.011
 
 SYNOPSIS
         # wire.yml
@@ -230,6 +230,117 @@ OVERVIEW
     make sure your object is created as soon as possible by doing
     "lifecycle: eager".
 
+   on
+    Attach event listeners using Beam::Emitter.
+
+        emitter:
+            class: My::Emitter
+            on:
+                before_my_event:
+                    $ref: listener
+                    $method: on_before_my_event
+                my_event:
+                    - $ref: listener
+                      $method: on_my_event
+                    - $ref: other_listener
+                      $method: on_my_event
+        listener:
+            class: My::Listener
+        other_listener:
+            class: My::Listener
+
+    Now, when the "emitter" fires off its events, they are dispatched to the
+    appropriate listeners.
+
+    In order to work around a bug in YAML.pm, you can also specify event
+    listeners as an array of hashes:
+
+        emitter:
+            class: My::Emitter
+            on:
+                - before_my_event:
+                    $ref: listener
+                    $method: on_before_my_event
+                - my_event:
+                    $ref: listener
+                    $method: on_my_event
+                - my_event:
+                    $ref: other_listener
+                    $method: on_my_event
+
+   Config Services
+    A config service allows you to read a config file and use it as a
+    service, giving all or part of it to other objects in your container.
+
+    To create a config service, use the "config" key. The value is the path
+    to the file to read. By default, YAML, JSON, XML, and Perl files are
+    supported (via Config::Any).
+
+        # db_config.yml
+        dsn: 'dbi:mysql:dbname'
+        user: 'mysql'
+        pass: '12345'
+
+        # container.yml
+        db_config:
+            config: db_config.yml
+
+    You can pass in the entire config to an object using $ref:
+
+        # container.yml
+        db_config:
+            config: db_config.yml
+        dbobj:
+            class: My::DB
+            args:
+                conf:
+                    $ref: db_config
+
+    If you only need the config file once, you can create an anonymous
+    config object.
+
+        # container.yml
+        dbobj:
+            class: My::DB
+            args:
+                conf:
+                    $config: db_config.yml
+
+    The config file can be used as all the arguments to the service:
+
+        # container.yml
+        dbobj:
+            class: My::DB
+            args:
+                $config: db_config.yml
+
+    In this example, the constructor will be called like:
+
+        my $dbobj = My::DB->new(
+            dsn => 'dbi:mysql:dbname',
+            user => 'mysql',
+            pass => '12345',
+        );
+
+    You can reference individual items in a configuration hash using $path
+    references:
+
+        # container.yml
+        db_config:
+            config: db_config.yml
+        dbh:
+            class: DBI
+            method: connect
+            args:
+                - $ref: db_config
+                  $path: /dsn
+                - $ref: db_config
+                  $path: /user
+                - $ref: db_config
+                  $path: /pass
+
+    NOTE: You cannot use $path and anonymous config objects.
+
    Inner Containers
     Beam::Wire objects can hold other Beam::Wire objects!
 
@@ -388,6 +499,9 @@ EXCEPTIONS
 
   Beam::Wire::Exception
     The base exception class
+
+  Beam::Wire::Exception::Constructor
+    An exception creating a Beam::Wire object
 
   Beam::Wire::Exception::Service
     An exception with service information inside

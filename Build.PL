@@ -20,32 +20,34 @@ my %module_build_args = (
     "Al Newkirk <anewkirk\@ana.io>"
   ],
   "dist_name" => "Beam-Wire",
-  "dist_version" => "1.010",
+  "dist_version" => "1.011",
   "license" => "perl",
   "module_name" => "Beam::Wire",
-  "recommends" => {},
+  "recommends" => {
+    "JSON" => 0
+  },
   "recursive_test_files" => 1,
   "requires" => {
-    "Class::Load" => 0,
+    "Beam::Emitter" => 0,
     "Config::Any" => "0.23",
     "Data::DPath" => "0.51",
-    "List::MoreUtils" => 0,
+    "Module::Runtime" => 0,
     "Moo" => 0,
-    "MooX::Types::MooseLike" => 0,
-    "Throwable" => 0
+    "Path::Tiny" => "0.055",
+    "Throwable" => 0,
+    "Types::Standard" => 0,
+    "YAML" => 0
   },
   "script_files" => [],
   "test_requires" => {
     "File::Spec" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
-    "JSON" => 0,
     "Test::Deep" => 0,
     "Test::Differences" => 0,
     "Test::Exception" => 0,
     "Test::Lib" => 0,
-    "Test::More" => 0,
-    "YAML" => 0
+    "Test::More" => 0
   }
 );
 
@@ -54,14 +56,12 @@ my %fallback_build_requires = (
   "File::Spec" => 0,
   "IO::Handle" => 0,
   "IPC::Open3" => 0,
-  "JSON" => 0,
   "Module::Build" => "0.28",
   "Test::Deep" => 0,
   "Test::Differences" => 0,
   "Test::Exception" => 0,
   "Test::Lib" => 0,
-  "Test::More" => 0,
-  "YAML" => 0
+  "Test::More" => 0
 );
 
 

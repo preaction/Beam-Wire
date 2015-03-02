@@ -1,6 +1,20 @@
 Changelog for Beam-Wire
 
-1.010 2015-02-07T21:55:50
+1.011 2015-03-02T04:06:51
+ - allow $class and $extends in event listeners
+ - allow array of hashes in event listeners
+ - remove JSON from TestRequires prereqs
+ - allow Path::Tiny in addition to path strings
+ - stringify all exceptions to useful error messages
+ - throw an exception if the conf file does not exist
+ - allow config services to be used as all arguments
+ - add config key to load config files as services
+ - add event listeners to services in configuration
+ - remove List::MoreUtils dependency
+ - switch to Module::Runtime
+ - switch to using Type::Tiny
+
+1.010 2015-02-07T21:55:50Z
  - update Data::DPath to fix warning on perl 5.20
  - add dzil plugin for prereqs and compile tests
  - remove root dotfiles and root ini files from dist

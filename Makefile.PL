@@ -24,27 +24,27 @@ my %WriteMakefileArgs = (
   "LICENSE" => "perl",
   "NAME" => "Beam::Wire",
   "PREREQ_PM" => {
-    "Class::Load" => 0,
+    "Beam::Emitter" => 0,
     "Config::Any" => "0.23",
     "Data::DPath" => "0.51",
-    "List::MoreUtils" => 0,
+    "Module::Runtime" => 0,
     "Moo" => 0,
-    "MooX::Types::MooseLike" => 0,
-    "Throwable" => 0
+    "Path::Tiny" => "0.055",
+    "Throwable" => 0,
+    "Types::Standard" => 0,
+    "YAML" => 0
   },
   "TEST_REQUIRES" => {
     "File::Spec" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
-    "JSON" => 0,
     "Test::Deep" => 0,
     "Test::Differences" => 0,
     "Test::Exception" => 0,
     "Test::Lib" => 0,
-    "Test::More" => 0,
-    "YAML" => 0
+    "Test::More" => 0
   },
-  "VERSION" => "1.010",
+  "VERSION" => "1.011",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -52,24 +52,24 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
-  "Class::Load" => 0,
+  "Beam::Emitter" => 0,
   "Config::Any" => "0.23",
   "Data::DPath" => "0.51",
   "ExtUtils::MakeMaker" => 0,
   "File::Spec" => 0,
   "IO::Handle" => 0,
   "IPC::Open3" => 0,
-  "JSON" => 0,
-  "List::MoreUtils" => 0,
   "Module::Build" => "0.28",
+  "Module::Runtime" => 0,
   "Moo" => 0,
-  "MooX::Types::MooseLike" => 0,
+  "Path::Tiny" => "0.055",
   "Test::Deep" => 0,
   "Test::Differences" => 0,
   "Test::Exception" => 0,
   "Test::Lib" => 0,
   "Test::More" => 0,
   "Throwable" => 0,
+  "Types::Standard" => 0,
   "YAML" => 0
 );
 
