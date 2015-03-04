@@ -27,6 +27,7 @@ use Beam::Wire;
         return $self->new( text => join "; ", $self->text, $args{text} );
     }
 }
+local $INC{"Foo.pm"} = __FILE__;
 
 subtest 'method' => sub {
     my $wire = Beam::Wire->new(

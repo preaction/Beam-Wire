@@ -43,6 +43,8 @@ use Beam::Wire;
         is      => 'ro',
     );
 }
+$INC{"$_.pm"} = __FILE__ for qw( Foo Bar Buzz Fizz );
+
 
 my @paths = map {; $_, "$_" }
             map { path( $Bin, 'share', $_ ) }
