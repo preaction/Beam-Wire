@@ -782,7 +782,10 @@ sub create_service {
 
         for my $listener ( @listeners ) {
             my ( $event, $conf ) = @$listener;
-            my $sub_name = delete $conf->{ $meta{sub} };
+            if ( $conf->{ $meta{method} } && !$conf->{ $meta{sub} } ) {
+                _deprecated( 'warning: (deprecated) "$method" in event handlers is now "$sub" in service "' . $name . '"' );
+            }
+            my $sub_name = delete $conf->{ $meta{sub} } || delete $conf->{ $meta{method} };
             my ( $listen_svc ) = $self->find_refs( $conf );
             $service->on( $event => sub { $listen_svc->$sub_name( @_ ) } );
         }
@@ -925,6 +928,13 @@ sub BUILD {
         }
     }
     return;
+}
+
+my %deprecated_warnings;
+sub _deprecated {
+    my ( $warning ) = @_;
+    return if $deprecated_warnings{ $warning };
+    warn $deprecated_warnings{ $warning } = $warning . "\n";
 }
 
 # Load a config file
