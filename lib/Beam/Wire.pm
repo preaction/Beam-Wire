@@ -782,11 +782,9 @@ sub create_service {
 
         for my $listener ( @listeners ) {
             my ( $event, $conf ) = @$listener;
-            # XXX: Make $args prepend arguments to the listener
-            # XXX: Make $args also resolve refs
-            my $method = delete $conf->{ $meta{method} };
+            my $sub_name = delete $conf->{ $meta{sub} };
             my ( $listen_svc ) = $self->find_refs( $conf );
-            $service->on( $event => sub { $listen_svc->$method( @_ ) } );
+            $service->on( $event => sub { $listen_svc->$sub_name( @_ ) } );
         }
     }
 
@@ -868,6 +866,7 @@ sub get_meta_names {
         args    => "${prefix}args",
         class   => "${prefix}class",
         extends => "${prefix}extends",
+        sub     => "${prefix}sub",
     );
     return wantarray ? %meta : \%meta;
 }

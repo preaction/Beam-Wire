@@ -13,7 +13,7 @@ subtest 'single event listener' => sub {
                 on => {
                     greet => {
                         '$ref' => 'listener',
-                        '$method' => 'on_greet',
+                        '$sub' => 'on_greet',
                     },
                 },
             },
@@ -42,11 +42,11 @@ subtest 'multiple event listeners' => sub {
                         greet => [
                             {
                                 '$ref' => 'listener',
-                                '$method' => 'on_greet',
+                                '$sub' => 'on_greet',
                             },
                             {
                                 '$ref' => 'other_listener',
-                                '$method' => 'on_greet',
+                                '$sub' => 'on_greet',
                             },
                         ],
                     },
@@ -78,13 +78,13 @@ subtest 'multiple event listeners' => sub {
                         {
                             greet => {
                                 '$ref' => 'listener',
-                                '$method' => 'on_greet',
+                                '$sub' => 'on_greet',
                             },
                         },
                         {
                             greet => {
                                 '$ref' => 'other_listener',
-                                '$method' => 'on_greet',
+                                '$sub' => 'on_greet',
                             },
                         },
                     ],
@@ -120,7 +120,7 @@ subtest 'anonymous listeners' => sub {
                     on => {
                         greet => {
                             '$class' => 'My::Listener',
-                            '$method' => 'on_greet',
+                            '$sub' => 'on_greet',
                         },
                     },
                 },
@@ -143,7 +143,7 @@ subtest 'anonymous listeners' => sub {
                     on => {
                         greet => {
                             '$extends' => 'listener',
-                            '$method' => 'on_greet',
+                            '$sub' => 'on_greet',
                         },
                     },
                 },
