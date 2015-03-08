@@ -14,6 +14,10 @@ has events_seen => (
     default => sub { 0 },
 );
 
+has attribute => (
+    is => 'ro',
+);
+
 sub on_greet {
     my ( $self ) = @_;
     $self->events_seen( $self->events_seen + 1 );

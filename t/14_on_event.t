@@ -120,6 +120,9 @@ subtest 'anonymous listeners' => sub {
                     on => {
                         greet => {
                             '$class' => 'My::Listener',
+                            '$args' => {
+                                attribute => 'foo',
+                            },
                             '$sub' => 'on_greet',
                         },
                     },
@@ -133,6 +136,7 @@ subtest 'anonymous listeners' => sub {
 
         $svc->emit( 'greet' );
         is $My::Listener::LAST_CREATED->events_seen, 1;
+        is $My::Listener::LAST_CREATED->attribute, 'foo';
     };
 
     subtest '$extends' => sub {
