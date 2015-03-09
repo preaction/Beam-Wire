@@ -1,6 +1,13 @@
 Changelog for Beam-Wire
 
-1.011 2015-03-02T04:06:51
+1.012 2015-03-09T03:47:33
+ - fix some more inline package lookups
+ - add deprecation warn for $method in event handlers
+ - add test for anonymous event handler args
+ - rename "method" in event handler to "sub"
+ - fix "Can't locate Foo.pm in @INC" in tests
+
+1.011 2015-03-02T04:06:51Z
  - allow $class and $extends in event listeners
  - allow array of hashes in event listeners
  - remove JSON from TestRequires prereqs
