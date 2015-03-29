@@ -9,6 +9,13 @@ sub BUILDARGS {
     return { got_args => \@args };
 }
 
-sub got_args_hash { return { @{ $_[0]->got_args } } }
+sub got_args_hash {
+    my ( $self, @keys ) = @_;
+    my $hash = { @{ $_[0]->got_args } };
+    if ( @keys ) {
+        return [ map { $hash->{$_} } @keys ];
+    }
+    return $hash;
+}
 
 1;

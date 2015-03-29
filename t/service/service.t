@@ -9,9 +9,9 @@ subtest 'value service: simple scalar' => sub {
     my $wire = Beam::Wire->new(
         config => {
             foo => {
-                class => 'Foo',
+                class => 'My::RefTest',
                 args  => {
-                    foo => { '$ref' => 'greeting' }
+                    got_ref => { '$ref' => 'greeting' }
                 },
             },
             greeting => {
@@ -22,34 +22,34 @@ subtest 'value service: simple scalar' => sub {
 
     my $greeting;
     lives_ok { $greeting = $wire->get( 'greeting' ) };
-    is ref $greeting, q{}, 'got a simple scalar';
+    ok !ref $greeting, 'got a simple scalar';
     is $greeting, 'Hello, World';
 
     my $foo;
     lives_ok { $foo = $wire->get( 'foo' ) };
-    isa_ok $foo, 'Foo';
-    is $foo->foo, 'Hello, World';
+    isa_ok $foo, 'My::RefTest';
+    is $foo->got_ref, 'Hello, World';
 };
 
 subtest 'get() override factory (anonymous services)' => sub {
     my $wire = Beam::Wire->new(
         config => {
             bar => {
-                class => 'Foo',
+                class => 'My::ArgsTest',
             },
             foo => {
-                class => 'Foo',
+                class => 'My::RefTest',
                 args => {
-                    foo => { '$ref' => "bar" },
+                    got_ref => { '$ref' => "bar" },
                 },
             },
         },
     );
     my $foo = $wire->get( 'foo' );
-    my $oof = $wire->get( 'foo', args => { foo => Foo->new( text => 'New World' ) } );
+    my $oof = $wire->get( 'foo', args => { got_ref => My::ArgsTest->new( text => 'New World' ) } );
     isnt refaddr $oof, refaddr $foo, 'get() with overrides creates a new object';
     isnt refaddr $oof, refaddr $wire->get('foo'), 'get() with overrides does not save the object';
-    isnt refaddr $oof->foo, refaddr $foo->foo, 'our override gave our new object a new bar';
+    isnt refaddr $oof->got_ref, refaddr $foo->got_ref, 'our override gave our new object a new bar';
 };
 
 subtest 'dies when service not found' => sub {

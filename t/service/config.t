@@ -61,7 +61,7 @@ subtest 'anonymous configs' => sub {
     my $wire = Beam::Wire->new(
         config => {
             foo => {
-                class => 'Foo',
+                class => 'My::ArgsTest',
                 args  => {
                     foo => {
                         '$config' => $SHARE_DIR->child( config => 'config.yml' )->stringify,
@@ -73,14 +73,14 @@ subtest 'anonymous configs' => sub {
 
     my $svc;
     lives_ok { $svc = $wire->get( 'foo' ) };
-    isa_ok $svc, 'Foo';
-    cmp_deeply $svc->foo, $EXPECT;
+    isa_ok $svc, 'My::ArgsTest';
+    cmp_deeply $svc->got_args_hash, { foo => $EXPECT };
 
     subtest 'use a config as all the arguments' => sub {
         my $wire = Beam::Wire->new(
             config => {
                 foo => {
-                    class => 'Foo',
+                    class => 'My::ArgsTest',
                     args  => {
                         '$config' => $SHARE_DIR->child( config => 'config.yml' )->stringify,
                     },
@@ -90,8 +90,8 @@ subtest 'anonymous configs' => sub {
 
         my $svc;
         lives_ok { $svc = $wire->get( 'foo' ) };
-        isa_ok $svc, 'Foo';
-        cmp_deeply $svc->foo, $EXPECT->{foo};
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args_hash, $EXPECT;
 
     };
 };
@@ -105,7 +105,7 @@ subtest 'config references' => sub {
                     config => $SHARE_DIR->child( config => 'config.yml' )->stringify,
                 },
                 foo => {
-                    class => 'Foo',
+                    class => 'My::ArgsTest',
                     args  => {
                         foo => {
                             '$ref' => 'yaml',
@@ -117,8 +117,8 @@ subtest 'config references' => sub {
 
         my $svc;
         lives_ok { $svc = $wire->get( 'foo' ) };
-        isa_ok $svc, 'Foo';
-        cmp_deeply $svc->foo, $EXPECT;
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args_hash, { foo => $EXPECT };
     };
 
     subtest 'ref a path in a config' => sub {
@@ -128,7 +128,7 @@ subtest 'config references' => sub {
                     config => $SHARE_DIR->child( config => 'config.yml' )->stringify,
                 },
                 foo => {
-                    class => 'Foo',
+                    class => 'My::ArgsTest',
                     args  => {
                         foo => {
                             '$ref' => 'yaml',
@@ -141,8 +141,9 @@ subtest 'config references' => sub {
 
         my $svc;
         lives_ok { $svc = $wire->get( 'foo' ) };
-        isa_ok $svc, 'Foo';
-        cmp_deeply $svc->foo, $EXPECT->{foo} or diag explain $svc->foo;
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args_hash, { foo => $EXPECT->{foo} }
+            or diag explain $svc->got_args_hash;
     };
 };
 
