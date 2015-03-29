@@ -3,13 +3,14 @@ inline_container:
     args:
         config:
             foo:
-                class: Foo
+                class: My::RefTest
                 args:
-                    bar: { $ref: bar }
+                    got_ref: { $ref: bar }
             bar:
-                class: Bar
+                class: My::ArgsTest
                 args:
                     text: "Hello, World"
+
 service_container:
     class: Beam::Wire
     args:
@@ -18,11 +19,12 @@ service_container:
             buzz: { $ref: buzz }
 
 fizz:
-    class: Foo
+    class: My::RefTest
     args:
-        bar: { $ref: 'inline_container/bar' }
+        got_ref: { $ref: 'inline_container/bar' }
 
 buzz:
-    class: Bar
+    class: My::ArgsTest
     args:
         text: "Hello, Buzz"
+

@@ -1,39 +1,16 @@
 
 use Test::More;
+use Test::Deep;
+use Test::Lib;
 use Scalar::Util qw( refaddr );
 
 use Beam::Wire;
-
-{
-    package Foo;
-    use Moo;
-    has 'text' => (
-        is      => 'rw',
-    );
-    has 'cons_called' => (
-        is       => 'ro',
-    );
-    sub cons {
-      my ( $class, @args ) = @_;
-      return $class->new( cons_called => 1, @args );
-    }
-    sub append {
-        my ( $self, $text ) = @_;
-        $self->text( join "; ", $self->text, $text );
-        return;
-    }
-    sub chain {
-        my ( $self, %args ) = @_;
-        return $self->new( text => join "; ", $self->text, $args{text} );
-    }
-}
-local $INC{"Foo.pm"} = __FILE__;
 
 subtest 'method' => sub {
     my $wire = Beam::Wire->new(
         config => {
             foo => {
-                class => 'Foo',
+                class => 'My::MethodTest',
                 method => 'cons',
                 args => {
                     text => 'Hello',
@@ -43,16 +20,18 @@ subtest 'method' => sub {
     );
 
     my $foo = $wire->get( 'foo' );
-    isa_ok $foo, 'Foo';
-    is $foo->cons_called, 1, 'cons was called, not new';
-    is $foo->text, 'Hello', 'args were passed';
+    isa_ok $foo, 'My::MethodTest';
+    cmp_deeply $foo->got_args_hash, {
+        cons => 1,
+        text => 'Hello',
+    };
 };
 
 subtest 'multi method' => sub {
     my $wire = Beam::Wire->new(
         config => {
             foo => {
-                class => 'Foo',
+                class => 'My::MethodTest',
                 method => [
                     {
                         method => 'new',
@@ -67,14 +46,14 @@ subtest 'multi method' => sub {
         },
     );
     my $foo = $wire->get( 'foo' );
-    is $foo->text, 'new; append';
+    cmp_deeply $foo->got_args_hash, { text => 'new; append' };
 };
 
 subtest 'chain method' => sub {
     my $wire = Beam::Wire->new(
         config => {
             foo => {
-                class => 'Foo',
+                class => 'My::MethodTest',
                 method => [
                     {
                         method => 'new',
@@ -90,7 +69,7 @@ subtest 'chain method' => sub {
         },
     );
     my $foo = $wire->get( 'foo' );
-    is $foo->text, 'new; chain';
+    cmp_deeply $foo->got_args, [ text => 'new; chain' ];
 };
 
 done_testing;

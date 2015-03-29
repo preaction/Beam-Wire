@@ -5,35 +5,11 @@ use Test::Deep;
 use Test::Lib;
 use Beam::Wire;
 
-{   package Foo;
-    use Moo;
-    has foo => is => 'ro';
-    my $singleton;
-    sub BUILDARGS {
-        my ( $class, @args ) = @_;
-        # Support scalar and array constructor args
-        if ( @args == 1 && ref $args[0] ne 'HASH' ) {
-            @args = ( foo => $args[0] );
-        }
-        return ref $args[0] ? $args[0] : {@args};
-    }
-    sub instance {
-        my ( $class, @args ) = @_;
-        if ( $singleton && @args ) {
-            die "Singleton is already made!\n";
-        }
-        # No, I do not know why you'd ever do this
-        return $singleton ||= $class->new( @args );
-    }
-    sub dies { die; } # Exactly as advertised
-}
-local $INC{"Foo.pm"} = __FILE__;
-
 subtest 'scalar args' => sub {
     my $wire = Beam::Wire->new(
         config => {
             base_scalar => {
-                class => 'Foo',
+                class => 'My::ArgsTest',
                 args  => 'Hello, World',
             },
             scalar_no_change => {
@@ -46,6 +22,7 @@ subtest 'scalar args' => sub {
 
             base_method => {
                 extends => 'base_scalar',
+                class => 'My::MethodTest',
                 method => 'dies',
             },
 
@@ -59,23 +36,23 @@ subtest 'scalar args' => sub {
     subtest 'extends scalar args, new args' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'scalar' ) };
-        isa_ok $svc, 'Foo';
-        is $svc->foo, 'Goodbye, World';
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args, [ 'Goodbye, World' ];
     };
 
     subtest 'extends scalar args, no changes' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'scalar_no_change' ) };
-        isa_ok $svc, 'Foo';
-        is $svc->foo, 'Hello, World';
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args, [ 'Hello, World' ];
     };
 
     subtest 'extends scalar args, new method, extends another extends' => sub {
         my $svc;
         dies_ok { $svc = $wire->get( 'base_method' ) };
         lives_ok { $svc = $wire->get( 'scalar_nested_extends' ) };
-        isa_ok $svc, 'Foo';
-        is $svc->foo, 'Hello, World';
+        isa_ok $svc, 'My::MethodTest';
+        cmp_deeply $svc->got_args, [ 'Hello, World' ];
     };
 };
 
@@ -83,7 +60,7 @@ subtest 'array args' => sub {
     my $wire = Beam::Wire->new(
         config => {
             base_array => {
-                class => 'Foo',
+                class => 'My::ArgsTest',
                 args => [ [ 'Hello', 'World' ] ],
             },
             array => {
@@ -102,15 +79,15 @@ subtest 'array args' => sub {
     subtest 'extends array args, new args' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'array' ) };
-        isa_ok $svc, 'Foo';
-        cmp_deeply $svc->foo, [ 'Goodbye', 'World' ];
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args, [ [ 'Goodbye', 'World' ] ];
     };
 
     subtest 'extends array args, change to hash args' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'replace_with_hash' ) };
-        isa_ok $svc, 'Foo';
-        is $svc->foo, 'Hello';
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args, [ foo => 'Hello'];
     };
 };
 
@@ -118,7 +95,7 @@ subtest 'hash args' => sub {
     my $wire = Beam::Wire->new(
         config => {
             base_hash => {
-                class => 'Greeting',
+                class => 'My::ArgsTest',
                 args => {
                     hello => 'Hello',
                     who => 'World',
@@ -136,9 +113,8 @@ subtest 'hash args' => sub {
     subtest 'extends hash args, new args' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'hash' ) };
-        isa_ok $svc, 'Greeting';
-        is $svc->hello, 'Hello';
-        is $svc->who, 'Everyone';
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args_hash, { hello => 'Hello', who => 'Everyone' };
     };
 };
 
@@ -146,9 +122,9 @@ subtest 'nested data structures' => sub {
     my $wire = Beam::Wire->new(
         config => {
             base_arraynest => {
-                class => 'Foo',
+                class => 'My::ArgsTest',
                 args => [ [
-                    'Hello', 
+                    'Hello',
                     [
                         { English => 'World' },
                         { French => 'Tout Le Monde' },
@@ -156,7 +132,7 @@ subtest 'nested data structures' => sub {
                 ] ],
             },
             base_hashnest => {
-                class => 'Greeting',
+                class => 'My::ArgsTest',
                 args => {
                     hello => {
                         English => 'Hello',
@@ -193,15 +169,17 @@ subtest 'nested data structures' => sub {
         # do this kind of merging differently
         my $svc;
         lives_ok { $svc = $wire->get( 'arraynest' ) };
-        isa_ok $svc, 'Foo';
-        cmp_deeply $svc->foo, [ 'Goodbye', [ { Spanish => 'Mundo' } ] ];
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args, [ [ 'Goodbye', [ { Spanish => 'Mundo' } ] ] ];
     };
     subtest 'extends hashnest, new args' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'hashnest' ) };
-        isa_ok $svc, 'Greeting';
-        cmp_deeply $svc->hello, { English => 'Hello', French => 'Bonjour' };
-        cmp_deeply $svc->who, [ { Spanish => 'Mundo' } ];
+        isa_ok $svc, 'My::ArgsTest';
+        cmp_deeply $svc->got_args_hash, {
+            hello => { English => 'Hello', French => 'Bonjour' },
+            who => [ { Spanish => 'Mundo' } ],
+        };
     };
 };
 

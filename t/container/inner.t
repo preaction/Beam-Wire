@@ -1,6 +1,7 @@
 
 use Test::More;
 use Test::Deep;
+use Test::Lib;
 use FindBin qw( $Bin );
 use Path::Tiny qw( path );
 use Scalar::Util qw( refaddr );
@@ -11,25 +12,6 @@ my $INNER_FILE  = path( $Bin, '..', 'share', 'inner_file.yml' );
 
 use Beam::Wire;
 
-{
-    package Foo;
-    use Moo;
-    has 'bar' => (
-        is      => 'ro',
-        isa     => sub { $_[0]->isa('Bar') },
-    );
-}
-local $INC{"Foo.pm"} = __FILE__;
-
-{
-    package Bar;
-    use Moo;
-    has text => (
-        is      => 'ro',
-    );
-}
-local $INC{"Bar.pm"} = __FILE__;
-
 subtest 'container in services' => sub {
     my $wire = Beam::Wire->new(
         services => {
@@ -38,12 +20,12 @@ subtest 'container in services' => sub {
     );
 
     my $foo = $wire->get( 'container/foo' );
-    isa_ok $foo, 'Foo';
+    isa_ok $foo, 'My::RefTest';
     my $obj = $wire->get('container/foo');
     is refaddr $foo, refaddr $obj, 'container caches the object';
-    isa_ok $foo->bar, 'Bar', 'container injects Bar object';
-    is refaddr $wire->get('container/bar'), refaddr $foo->bar, 'container caches Bar object';
-    is $wire->get('container/bar')->text, "Hello, World", 'container gives bar text value';
+    isa_ok $foo->got_ref, 'My::ArgsTest', 'container injects Bar object';
+    is refaddr $wire->get('container/bar'), refaddr $foo->got_ref, 'container caches Bar object';
+    cmp_deeply $wire->get('container/bar')->got_args, [ text => "Hello, World" ], 'container gives bar text value';
 };
 
 subtest 'container in file' => sub {
@@ -52,19 +34,19 @@ subtest 'container in file' => sub {
     );
 
     my $foo = $wire->get( 'inline_container/foo' );
-    isa_ok $foo, 'Foo';
+    isa_ok $foo, 'My::RefTest';
     is refaddr $foo, refaddr $wire->get('inline_container/foo'), 'container caches the object';
-    isa_ok $foo->bar, 'Bar', 'container injects Bar object';
-    is refaddr $wire->get('inline_container/bar'), refaddr $foo->bar, 'container caches Bar object';
-    is $wire->get('inline_container/bar')->text, "Hello, World", 'container gives bar text value';
+    isa_ok $foo->got_ref, 'My::ArgsTest', 'container injects Bar object';
+    is refaddr $wire->get('inline_container/bar'), refaddr $foo->got_ref, 'container caches Bar object';
+    cmp_deeply $wire->get('inline_container/bar')->got_args, [ text => "Hello, World" ], 'container gives bar text value';
 
     my $fizz = $wire->get( 'service_container/fizz' );
-    isa_ok $fizz, 'Foo';
+    isa_ok $fizz, 'My::RefTest';
     is refaddr $fizz, refaddr $wire->get('service_container/fizz'), 'container caches the object';
-    isa_ok $fizz->bar, 'Bar', 'container injects Bar object';
-    is refaddr $fizz->bar, refaddr $foo->bar, 'fizz takes the same bar as foo';
-    is refaddr $wire->get('inline_container/bar'), refaddr $fizz->bar, 'container caches Bar object';
-    is $wire->get('service_container/buzz')->text, "Hello, Buzz", 'container gives bar text value';
+    isa_ok $fizz->got_ref, 'My::ArgsTest', 'container injects Bar object';
+    is refaddr $fizz->got_ref, refaddr $foo->got_ref, 'fizz takes the same bar as foo';
+    is refaddr $wire->get('inline_container/bar'), refaddr $fizz->got_ref, 'container caches Bar object';
+    cmp_deeply $wire->get('service_container/buzz')->got_args, [ text => "Hello, Buzz" ], 'container gives bar text value';
 };
 
 subtest 'set inside subcontainer' => sub {
@@ -74,16 +56,16 @@ subtest 'set inside subcontainer' => sub {
         },
     );
 
-    my $fizz = Foo->new( bar => $wire->get('container/bar' ) );
+    my $fizz = My::RefTest->new( got_ref => $wire->get( 'container/bar' ) );
     $wire->set( 'container/fizz' => $fizz );
 
     my $foo = $wire->get( 'container/fizz' );
-    isa_ok $foo, 'Foo';
+    isa_ok $foo, 'My::RefTest';
     my $obj = $wire->get('container/fizz');
     is refaddr $foo, refaddr $obj, 'container caches the object';
-    isa_ok $foo->bar, 'Bar', 'container injects Bar object';
-    is refaddr $wire->get('container/bar'), refaddr $foo->bar, 'container caches Bar object';
-    is $wire->get('container/bar')->text, "Hello, World", 'container gives bar text value';
+    isa_ok $foo->got_ref, 'My::ArgsTest', 'container injects Bar object';
+    is refaddr $wire->get('container/bar'), refaddr $foo->got_ref, 'container caches Bar object';
+    cmp_deeply $wire->get('container/bar')->got_args, [ text => "Hello, World" ], 'container gives bar text value';
 };
 
 subtest 'inner container file' => sub {
@@ -92,12 +74,12 @@ subtest 'inner container file' => sub {
     );
 
     my $foo = $wire->get( 'container/foo' );
-    isa_ok $foo, 'Foo';
+    isa_ok $foo, 'My::RefTest';
     my $obj = $wire->get('container/foo');
     is refaddr $foo, refaddr $obj, 'container caches the object';
-    isa_ok $foo->bar, 'Bar', 'container injects Bar object';
-    is refaddr $wire->get('container/bar'), refaddr $foo->bar, 'container caches Bar object';
-    is $wire->get('container/bar')->text, "Hello, World", 'container gives bar text value';
+    isa_ok $foo->got_ref, 'My::ArgsTest', 'container injects Bar object';
+    is refaddr $wire->get('container/bar'), refaddr $foo->got_ref, 'container caches Bar object';
+    cmp_deeply $wire->get('container/bar')->got_args, [ text => "Hello, World" ], 'container gives bar text value';
 };
 
 subtest 'inner container get() overrides' => sub {
@@ -106,10 +88,10 @@ subtest 'inner container get() overrides' => sub {
     );
 
     my $foo = $wire->get( 'container/foo' );
-    my $oof = $wire->get( 'container/foo', args => { bar => Bar->new( text => 'New World' ) } );
+    my $oof = $wire->get( 'container/foo', args => { got_ref => My::ArgsTest->new( text => 'New World' ) } );
     isnt refaddr $oof, refaddr $foo, 'get() with overrides creates a new object';
     isnt refaddr $oof, refaddr $wire->get('container/foo'), 'get() with overrides does not save the object';
-    isnt refaddr $oof->bar, refaddr $foo->bar, 'our override gave our new object a new bar';
+    isnt refaddr $oof->got_ref, refaddr $foo->got_ref, 'our override gave our new object a new bar';
 };
 
 subtest 'inner extends' => sub {
@@ -125,11 +107,11 @@ subtest 'inner extends' => sub {
         },
     );
     my $foo = $wire->get( 'foo' );
-    isa_ok $foo, 'Foo';
+    isa_ok $foo, 'My::RefTest';
     is refaddr $foo, refaddr $wire->get('foo'), 'container caches the object';
-    isa_ok $foo->bar, 'Bar', 'container injects Bar object';
-    is refaddr $wire->get('inner/bar'), refaddr $foo->bar, 'container caches Bar object';
-    is $wire->get('inner/bar')->text, "Hello, World", 'container gives bar text value';
+    isa_ok $foo->got_ref, 'My::ArgsTest', 'container injects Bar object';
+    is refaddr $wire->get('inner/bar'), refaddr $foo->got_ref, 'container caches Bar object';
+    cmp_deeply $wire->get('inner/bar')->got_args, [ text => "Hello, World" ], 'container gives bar text value';
 };
 
 subtest 'inner get_config' => sub {
@@ -145,10 +127,7 @@ subtest 'inner get_config' => sub {
         },
     );
     my $config = $wire->get_config( 'inner/foo' );
-    cmp_deeply $config, { class => 'Foo', args => { bar => { '$ref' => 'inner/bar' } } } or diag explain $config;
+    cmp_deeply $config, { class => 'My::RefTest', args => { got_ref => { '$ref' => 'inner/bar' } } } or diag explain $config;
 };
-
-
-
 
 done_testing;

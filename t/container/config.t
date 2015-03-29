@@ -1,50 +1,12 @@
 
 use Test::More;
 use Test::Deep;
+use Test::Lib;
 use FindBin qw( $Bin );
 use Path::Tiny qw( path );
 use Scalar::Util qw( refaddr );
 
 use Beam::Wire;
-
-{
-    package Foo;
-    use Moo;
-    has 'bar' => (
-        is      => 'ro',
-        isa     => sub { $_[0]->isa('Bar') },
-    );
-}
-
-{
-    package Bar;
-    use Moo;
-    has text => (
-        is      => 'ro',
-    );
-}
-
-{
-    package Buzz;
-    use Moo;
-    has aref => (
-        is      => 'ro',
-    );
-    sub BUILDARGS {
-        my ( $class, $aref ) = @_;
-        return { aref => $aref };
-    }
-}
-
-{
-    package Fizz;
-    use Moo;
-    has href => (
-        is      => 'ro',
-    );
-}
-$INC{"$_.pm"} = __FILE__ for qw( Foo Bar Buzz Fizz );
-
 
 my @paths = map {; $_, "$_" }
             map { path( $Bin, '..', 'share', $_ ) }
@@ -61,21 +23,21 @@ for my $path ( @paths ) {
 
         my $wire = Beam::Wire->new( file => $path );
         my $foo = $wire->get('foo');
-        isa_ok $foo, 'Foo';
+        isa_ok $foo, 'My::RefTest';
         is refaddr $wire->get('foo'), refaddr $foo, 'container caches the object';
-        isa_ok $wire->get('foo')->bar, 'Bar', 'container injects Bar object';
-        is refaddr $wire->get('bar'), refaddr $foo->bar, 'container caches Bar object';
-        is $wire->get('bar')->text, "Hello, World", 'container gives bar text value';
+        isa_ok $wire->get('foo')->got_ref, 'My::ArgsTest', 'container injects My::ArgsTest object';
+        is refaddr $wire->get('bar'), refaddr $foo->got_ref, 'container caches Bar object';
+        cmp_deeply $wire->get('bar')->got_args, [text => "Hello, World"], 'container gives bar text value';
 
         my $buzz = $wire->get( 'buzz' );
-        isa_ok $buzz, 'Buzz', 'container gets buzz object';
+        isa_ok $buzz, 'My::ArgsTest', 'container gets constructor test object';
         is refaddr $wire->get('buzz'), refaddr $buzz, 'container caches the object';
-        cmp_deeply $buzz->aref, [qw( one two three )], 'container gives array of arrayrefs';
+        cmp_deeply $buzz->got_args, [[qw( one two three )]], 'container gives array of arrayrefs';
 
         my $fizz = $wire->get( 'fizz' );
-        isa_ok $fizz, 'Fizz', 'container gets Fizz object';
+        isa_ok $fizz, 'My::ArgsTest', 'container gets Fizz object';
         is refaddr $wire->get('fizz'), refaddr $fizz, 'container caches the object';
-        cmp_deeply $fizz->href, { one => 'two' }, 'container gives hashref';
+        cmp_deeply $fizz->got_args, [{ one => 'two' }], 'container gives hashref';
     };
 }
 

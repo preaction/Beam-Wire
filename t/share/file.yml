@@ -1,20 +1,17 @@
 foo:
-    class: Foo
+    class: My::RefTest
     args:
-        bar: { $ref: bar }
+        got_ref: { $ref: bar }
 bar:
-    class: Bar
+    class: My::ArgsTest
     args:
         text: "Hello, World"
 buzz:
-    class: Buzz
+    class: My::ArgsTest
     args:
         - [ 'one', 'two', 'three' ]
 
 fizz:
-    class: Fizz
+    class: My::ArgsTest
     args:
-        href: { one: 'two' }
-fizzbuzz:
-    class: Buzz
-    args: "Hello"
+        - { one: 'two' }

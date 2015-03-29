@@ -1,19 +1,19 @@
 ## no critic ( RequireUseStrict RequireUseWarnings )
 {
     "foo" => {
-        "class" => "Foo",
-        "args" => { "bar" => { '$ref' => "bar" } }
+        "class" => "My::RefTest",
+        "args" => { "got_ref" => { '$ref' => "bar" } }
     },
     "bar" => {
-        "class" => "Bar",
+        "class" => "My::ArgsTest",
         "args" => { "text" => "Hello, World" }
     },
     "buzz" => {
-        "class" => "Buzz",
+        "class" => "My::ArgsTest",
         "args" => [[ "one", "two", "three" ]]
     },
     "fizz" => {
-        "class" => "Fizz",
-        "args" => { "href" => { "one" => "two" } }
+        "class" => "My::ArgsTest",
+        "args" => [ { "one" => "two" } ]
     }
 }
