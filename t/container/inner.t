@@ -5,9 +5,9 @@ use FindBin qw( $Bin );
 use Path::Tiny qw( path );
 use Scalar::Util qw( refaddr );
 
-my $SINGLE_FILE = path( $Bin, 'share', 'file.yml' );
-my $DEEP_FILE   = path( $Bin, 'share', 'inner_inline.yml' );
-my $INNER_FILE  = path( $Bin, 'share', 'inner_file.yml' );
+my $SINGLE_FILE = path( $Bin, '..', 'share', 'file.yml' );
+my $DEEP_FILE   = path( $Bin, '..', 'share', 'inner_inline.yml' );
+my $INNER_FILE  = path( $Bin, '..', 'share', 'inner_file.yml' );
 
 use Beam::Wire;
 

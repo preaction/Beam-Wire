@@ -6,7 +6,7 @@ use Test::Lib;
 use Beam::Wire;
 use Path::Tiny qw( path tempdir cwd );
 use FindBin qw( $Bin );
-my $SHARE_DIR = path( $Bin, 'share' );
+my $SHARE_DIR = path( $Bin, '..', 'share' );
 
 my $EXPECT = {
     foo => 'bar',

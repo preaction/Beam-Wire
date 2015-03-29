@@ -47,7 +47,7 @@ $INC{"$_.pm"} = __FILE__ for qw( Foo Bar Buzz Fizz );
 
 
 my @paths = map {; $_, "$_" }
-            map { path( $Bin, 'share', $_ ) }
+            map { path( $Bin, '..', 'share', $_ ) }
             qw( file.json file.pl file.yml )
             ;
 
