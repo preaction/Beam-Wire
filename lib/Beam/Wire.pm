@@ -274,12 +274,12 @@ Attach event listeners using L<Beam::Emitter|Beam::Emitter>.
         on:
             before_my_event:
                 $ref: listener
-                $method: on_before_my_event
+                $sub: on_before_my_event
             my_event:
                 - $ref: listener
-                  $method: on_my_event
+                  $sub: on_my_event
                 - $ref: other_listener
-                  $method: on_my_event
+                  $sub: on_my_event
     listener:
         class: My::Listener
     other_listener:
@@ -296,13 +296,13 @@ as an array of hashes:
         on:
             - before_my_event:
                 $ref: listener
-                $method: on_before_my_event
+                $sub: on_before_my_event
             - my_event:
                 $ref: listener
-                $method: on_my_event
+                $sub: on_my_event
             - my_event:
                 $ref: other_listener
-                $method: on_my_event
+                $sub: on_my_event
 
 =head3 Config Services
 
