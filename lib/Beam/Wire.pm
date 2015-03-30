@@ -930,6 +930,7 @@ sub resolve_ref {
         @ref = $service->$method( @args );
     }
     elsif ( my $method = $arg->{ $meta{method} } ) {
+        _deprecated( 'warning: (deprecated) Using "$method" to get a value in a dependency is now "$call" in service "' . $for . '"' );
         my $args = $arg->{ $meta{args} };
         my @args = !$args                ? ()
                  : ref $args eq 'ARRAY'  ? @{ $args }
