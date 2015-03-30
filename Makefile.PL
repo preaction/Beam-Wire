@@ -44,9 +44,9 @@ my %WriteMakefileArgs = (
     "Test::Lib" => 0,
     "Test::More" => 0
   },
-  "VERSION" => "1.012",
+  "VERSION" => "1.013",
   "test" => {
-    "TESTS" => "t/*.t"
+    "TESTS" => "t/*.t t/container/*.t t/dependency/*.t t/deprecated/*.t t/service/*.t"
   }
 );
 

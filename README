@@ -2,7 +2,7 @@ NAME
     Beam::Wire - Lightweight Dependency Injection Container
 
 VERSION
-    version 1.012
+    version 1.013
 
 SYNOPSIS
         # wire.yml
@@ -199,6 +199,24 @@ OVERVIEW
     "activemq_dev" will get the "port", "user", and "password" arguments
     from the base service "activemq".
 
+   with
+    Compose roles into the service object.
+
+        app:
+            class: My::App
+            with: My::FeatureRole
+
+        otherapp:
+            class: My::App
+            with:
+                - My::FeatureRole
+                - My::OtherFeatureRole
+
+    This lets you break features out into roles, and compose those roles a
+    la carte on the fly. If you have 20 different optional features, it is
+    difficult to create every possible combination of them. So, "with"
+    allows you to pick the features you want.
+
    lifecycle
     Control how your service is created. The default value, "singleton",
     will cache the resulting service and return it for every call to
@@ -238,12 +256,12 @@ OVERVIEW
             on:
                 before_my_event:
                     $ref: listener
-                    $method: on_before_my_event
+                    $sub: on_before_my_event
                 my_event:
                     - $ref: listener
-                      $method: on_my_event
+                      $sub: on_my_event
                     - $ref: other_listener
-                      $method: on_my_event
+                      $sub: on_my_event
         listener:
             class: My::Listener
         other_listener:
@@ -260,13 +278,13 @@ OVERVIEW
             on:
                 - before_my_event:
                     $ref: listener
-                    $method: on_before_my_event
+                    $sub: on_before_my_event
                 - my_event:
                     $ref: listener
-                    $method: on_my_event
+                    $sub: on_my_event
                 - my_event:
                     $ref: other_listener
-                    $method: on_my_event
+                    $sub: on_my_event
 
    Config Services
     A config service allows you to read a config file and use it as a

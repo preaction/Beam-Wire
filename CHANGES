@@ -1,6 +1,19 @@
 Changelog for Beam-Wire
 
-1.012 2015-03-09T03:47:33
+1.013 2015-03-30T04:07:22
+ - deprecate $method in dependency to get a value
+ - add $call to get a dependency by calling a method
+ - test that extended configs remain unchanged
+ - add current service name to args and ref resolver
+ - fix docs for event listeners
+ - more deprecation test to a directory
+ - compose roles into service objects
+ - fix categorization of some tests
+ - write all tests in terms of new example modules
+ - remove inline packages from test scripts
+ - categorize tests with directories
+
+1.012 2015-03-09T03:47:33Z
  - fix some more inline package lookups
  - add deprecation warn for $method in event handlers
  - add test for anonymous event handler args
