@@ -5,8 +5,6 @@ use Test::Lib;
 use Test::Deep;
 use Beam::Wire;
 
-# XXX: $method in dependency needs to be called $call
-
 subtest 'method with no arguments' => sub {
     my $wire = Beam::Wire->new(
         config => {
@@ -15,7 +13,7 @@ subtest 'method with no arguments' => sub {
                 args  => {
                     got_ref => {
                         '$ref' => 'greeting',
-                        '$method' => 'got_args_hash',
+                        '$call' => 'got_args_hash',
                     },
                 },
             },
@@ -38,13 +36,15 @@ subtest 'method with no arguments' => sub {
 subtest 'method with one argument' => sub {
     my $wire = Beam::Wire->new(
         config => {
-            bar => {
+            foo => {
                 class => 'My::RefTest',
                 args => {
                     got_ref => {
                         '$ref' => 'greeting',
-                        '$method' => 'got_args_hash',
-                        '$args' => 'hello',
+                        '$call' => {
+                            '$method' => 'got_args_hash',
+                            '$args' => 'hello',
+                        },
                     },
                 },
             },
@@ -58,7 +58,7 @@ subtest 'method with one argument' => sub {
         },
     );
     my $svc;
-    lives_ok { $svc = $wire->get( 'bar' ) };
+    lives_ok { $svc = $wire->get( 'foo' ) };
     isa_ok $svc, 'My::RefTest';
     cmp_deeply $svc->got_ref, [ 'Hello' ] or diag explain $svc->got_ref;
 };
@@ -66,13 +66,15 @@ subtest 'method with one argument' => sub {
 subtest 'method with arrayref of arguments' => sub {
     my $wire = Beam::Wire->new(
         config => {
-            foo_and_bar => {
+            foo => {
                 class => 'My::RefTest',
                 args => {
                     got_ref => {
                         '$ref' => 'greeting',
-                        '$method' => 'got_args_hash',
-                        '$args' => [ 'default', 'hello' ],
+                        '$call' => {
+                            '$method' => 'got_args_hash',
+                            '$args' => [ 'default', 'hello' ],
+                        },
                     },
                 },
             },
@@ -86,7 +88,7 @@ subtest 'method with arrayref of arguments' => sub {
         },
     );
     my $svc;
-    lives_ok { $svc = $wire->get( 'foo_and_bar' ) };
+    lives_ok { $svc = $wire->get( 'foo' ) };
     isa_ok $svc, 'My::RefTest';
     cmp_deeply $svc->got_ref, [ 'World', 'Hello' ] or diag explain $svc->got_ref;
 };

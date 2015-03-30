@@ -894,6 +894,7 @@ sub get_meta_names {
         class   => "${prefix}class",
         extends => "${prefix}extends",
         sub     => "${prefix}sub",
+        call    => "${prefix}call",
     );
     return wantarray ? %meta : \%meta;
 }
@@ -911,6 +912,22 @@ sub resolve_ref {
         # locate foreign service data
         my $conf = $self->get_config($name);
         @ref = dpath( $path )->match($service);
+    }
+    elsif ( my $call = $arg->{ $meta{call} } ) {
+        my ( $method, @args );
+
+        if ( ref $call eq 'HASH' ) {
+            $method = $call->{ $meta{method} };
+            my $args = $call->{ $meta{args} };
+            @args = !$args ? ()
+                  : ref $args eq 'ARRAY'  ? @{ $args }
+                  : $args;
+        }
+        else {
+            $method = $call;
+        }
+
+        @ref = $service->$method( @args );
     }
     elsif ( my $method = $arg->{ $meta{method} } ) {
         my $args = $arg->{ $meta{args} };
