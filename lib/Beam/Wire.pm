@@ -689,11 +689,11 @@ sub fix_refs {
 }
 
 sub parse_args {
-    my ( $self, $class, $args ) = @_;
+    my ( $self, $for, $class, $args ) = @_;
     return if not $args;
     my @args;
     if ( ref $args eq 'ARRAY' ) {
-        @args = $self->find_refs( @{$args} );
+        @args = $self->find_refs( $for, @{$args} );
     }
     elsif ( ref $args eq 'HASH' ) {
         # Hash args could be a ref
@@ -706,13 +706,13 @@ sub parse_args {
             if ( exists $args{file} && !path( $args{file} )->is_absolute ) {
                 $args{file} = $self->dir->child( $args{file} );
             }
-            @args = $self->find_refs( %args );
+            @args = $self->find_refs( $for, %args );
             if ( $config ) {
                 push @args, config => $config;
             }
         }
         else {
-            my ( $maybe_ref ) = $self->find_refs( $args );
+            my ( $maybe_ref ) = $self->find_refs( $for, $args );
             if ( blessed $maybe_ref ) {
                 @args = ( $maybe_ref );
             }
@@ -767,7 +767,7 @@ sub create_service {
             my $method_name = $m->{method};
             my $return = $m->{return} || q{};
             delete $service_info{args};
-            my @args = $self->parse_args( $service_info{class}, $m->{args} );
+            my @args = $self->parse_args( $name, $service_info{class}, $m->{args} );
             my $invocant = $service || $service_info{class};
             my $output = $invocant->$method_name( @args );
             $service = !$service || $return eq 'chain' ? $output
@@ -775,7 +775,7 @@ sub create_service {
         }
     }
     else {
-        my @args = $self->parse_args( @service_info{"class","args"} );
+        my @args = $self->parse_args( $name, @service_info{"class","args"} );
         $service = $service_info{class}->$method( @args );
     }
 
@@ -810,7 +810,7 @@ sub create_service {
                 _deprecated( 'warning: (deprecated) "$method" in event handlers is now "$sub" in service "' . $name . '"' );
             }
             my $sub_name = delete $conf->{ $meta{sub} } || delete $conf->{ $meta{method} };
-            my ( $listen_svc ) = $self->find_refs( $conf );
+            my ( $listen_svc ) = $self->find_refs( $name, $conf );
             $service->on( $event => sub { $listen_svc->$sub_name( @_ ) } );
         }
     }
@@ -843,14 +843,14 @@ sub merge_config {
 }
 
 sub find_refs {
-    my ( $self, @args ) = @_;
+    my ( $self, $for, @args ) = @_;
     my @out;
     my %meta = $self->get_meta_names;
     for my $arg ( @args ) {
         if ( ref $arg eq 'HASH' ) {
             if ( $self->is_meta( $arg ) ) {
                 if ( $arg->{ $meta{ ref } } ) {
-                    push @out, $self->resolve_ref( $arg );
+                    push @out, $self->resolve_ref( $for, $arg );
                 }
                 else { # Try to treat it as a service to create
                     my %service_info;
@@ -864,11 +864,11 @@ sub find_refs {
                 }
             }
             else {
-                push @out, { $self->find_refs( %{$arg} ) };
+                push @out, { $self->find_refs( $for, %{$arg} ) };
             }
         }
         elsif ( ref $arg eq 'ARRAY' ) {
-            push @out, [ map { $self->find_refs( $_ ) } @{$arg} ];
+            push @out, [ map { $self->find_refs( $for, $_ ) } @{$arg} ];
         }
         else {
             push @out, $arg; # simple scalars
@@ -899,7 +899,7 @@ sub get_meta_names {
 }
 
 sub resolve_ref {
-    my ( $self, $arg ) = @_;
+    my ( $self, $for, $arg ) = @_;
 
     my %meta = $self->get_meta_names;
 
