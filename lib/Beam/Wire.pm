@@ -216,6 +216,25 @@ Hash C<args> will be merged seperately, like so:
 C<activemq_dev> will get the C<port>, C<user>, and C<password> arguments
 from the base service C<activemq>.
 
+=head4 with
+
+Compose roles into the service object.
+
+    app:
+        class: My::App
+        with: My::FeatureRole
+
+    otherapp:
+        class: My::App
+        with:
+            - My::FeatureRole
+            - My::OtherFeatureRole
+
+This lets you break features out into roles, and compose those roles a la carte
+on the fly. If you have 20 different optional features, it is difficult to create
+every possible combination of them. So, C<with> allows you to pick the features
+you want.
+
 =head4 lifecycle
 
 Control how your service is created. The default value, C<singleton>, will cache
@@ -758,6 +777,11 @@ sub create_service {
     else {
         my @args = $self->parse_args( @service_info{"class","args"} );
         $service = $service_info{class}->$method( @args );
+    }
+
+    if ( my $with = $service_info{with} ) {
+        my @roles = ref $with ? @{ $with } : ( $with );
+        Moo::Role->apply_roles_to_object( $service, @roles );
     }
 
     if ( $service_info{on} ) {
