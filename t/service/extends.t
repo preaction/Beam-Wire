@@ -32,12 +32,16 @@ subtest 'scalar args' => sub {
             },
         },
     );
+    my $expect_base_scalar = $wire->get_config( 'base_scalar' );
+    my $expect_base_method = $wire->get_config( 'base_method' );
 
     subtest 'extends scalar args, new args' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'scalar' ) };
         isa_ok $svc, 'My::ArgsTest';
         cmp_deeply $svc->got_args, [ 'Goodbye, World' ];
+        cmp_deeply $wire->get_config( 'base_scalar' ), $expect_base_scalar,
+            'extends does not modify original config';
     };
 
     subtest 'extends scalar args, no changes' => sub {
@@ -45,6 +49,8 @@ subtest 'scalar args' => sub {
         lives_ok { $svc = $wire->get( 'scalar_no_change' ) };
         isa_ok $svc, 'My::ArgsTest';
         cmp_deeply $svc->got_args, [ 'Hello, World' ];
+        cmp_deeply $wire->get_config( 'base_scalar' ), $expect_base_scalar,
+            'extends does not modify original config';
     };
 
     subtest 'extends scalar args, new method, extends another extends' => sub {
@@ -53,6 +59,10 @@ subtest 'scalar args' => sub {
         lives_ok { $svc = $wire->get( 'scalar_nested_extends' ) };
         isa_ok $svc, 'My::MethodTest';
         cmp_deeply $svc->got_args, [ 'Hello, World' ];
+        cmp_deeply $wire->get_config( 'base_scalar' ), $expect_base_scalar,
+            'extends does not modify original config';
+        cmp_deeply $wire->get_config( 'base_method' ), $expect_base_method,
+            'extends does not modify original config';
     };
 };
 
@@ -76,11 +86,15 @@ subtest 'array args' => sub {
         },
     );
 
+    my $expect_base_array = $wire->get_config( 'base_array' );
+
     subtest 'extends array args, new args' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'array' ) };
         isa_ok $svc, 'My::ArgsTest';
         cmp_deeply $svc->got_args, [ [ 'Goodbye', 'World' ] ];
+        cmp_deeply $wire->get_config( 'base_array' ), $expect_base_array,
+            'extends does not modify original config';
     };
 
     subtest 'extends array args, change to hash args' => sub {
@@ -88,6 +102,8 @@ subtest 'array args' => sub {
         lives_ok { $svc = $wire->get( 'replace_with_hash' ) };
         isa_ok $svc, 'My::ArgsTest';
         cmp_deeply $svc->got_args, [ foo => 'Hello'];
+        cmp_deeply $wire->get_config( 'base_array' ), $expect_base_array,
+            'extends does not modify original config';
     };
 };
 
@@ -110,15 +126,22 @@ subtest 'hash args' => sub {
         },
     );
 
+    my $expect_base_hash = $wire->get_config( 'base_hash' );
+
     subtest 'extends hash args, new args' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'hash' ) };
         isa_ok $svc, 'My::ArgsTest';
         cmp_deeply $svc->got_args_hash, { hello => 'Hello', who => 'Everyone' };
+        cmp_deeply $wire->get_config( 'base_hash' ), $expect_base_hash,
+            'extends does not modify original config';
     };
 };
 
 subtest 'nested data structures' => sub {
+    # These pathological cases are for later if we decide to
+    # do this kind of merging differently
+
     my $wire = Beam::Wire->new(
         config => {
             base_arraynest => {
@@ -165,8 +188,6 @@ subtest 'nested data structures' => sub {
     );
 
     subtest 'extends arraynest, new args' => sub {
-        # These pathological cases are for later if we decide to
-        # do this kind of merging differently
         my $svc;
         lives_ok { $svc = $wire->get( 'arraynest' ) };
         isa_ok $svc, 'My::ArgsTest';
