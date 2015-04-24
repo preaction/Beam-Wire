@@ -989,6 +989,40 @@ sub _load_config {
    return "HASH" eq ref $loader ? (values(%{$loader}))[0] : {};
 }
 
+sub validate {
+    my @valid_dependency_nodes = qw( class method args extends lifecycle on config );
+    my ( $self, $instantiate ) = @_;
+    while ( my ( $name, $v ) = each %{ $self->{config} } ) {
+        my %config = %{ $self->get_config($name) };
+        %config = $self->merge_config(%config);
+
+        if ( exists $config{value} && ( exists $config{class} || exists $config{extends})) {
+            Beam::Wire::Exception::InvalidConfig->throw(
+                name => $name,
+                file => $self->file,
+                error => '"value" cannot be used with "class" or "extends"',
+            );
+        }
+
+        if ( $config{config} ) {
+            my $conf_path = path( $config{config} );
+            if ( $self->file ) {
+                $conf_path = path( $self->file )->parent->child($conf_path);
+            }
+            %config = %{ $self->_load_config("$conf_path") };
+        }
+
+        unless ( $config{value} || $config{class} || $config{extends} ) {
+            warn "$name in " . $self->file . " missing 'value', 'class', or 'extends'; ignoring...\n";
+            next;
+        }
+
+        eval "require " . $config{class} if $config{class};
+        #TODO: check method chain & serial
+        $self->get($name) if $instantiate;
+    }
+}
+
 =head1 EXCEPTIONS
 
 If there is an error internal to Beam::Wire, an exception will be thrown. If there is an

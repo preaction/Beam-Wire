@@ -20,7 +20,7 @@ my %WriteMakefileArgs = (
     "Module::Build" => "0.28"
   },
   "DISTNAME" => "Beam-Wire",
-  "EXE_FILES" => [],
+  "EXE_FILES" => ['script/beam-wire'],
   "LICENSE" => "perl",
   "NAME" => "Beam::Wire",
   "PREREQ_PM" => {

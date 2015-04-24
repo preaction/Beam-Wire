@@ -9,6 +9,7 @@ use Path::Tiny qw( path );
 my $SHARE_DIR = path( $Bin, 'share' );
 
 use Beam::Wire;
+sub invalid ($$$$);
 
 subtest 'config file does not exist' => sub {
     throws_ok { Beam::Wire->new( file => 'DOES_NOT_EXIST.yml' ) } 'Beam::Wire::Exception::Constructor';
@@ -41,6 +42,7 @@ subtest "extend a service that doesn't exist" => sub {
     throws_ok { $wire->get( 'foo' ) } 'Beam::Wire::Exception::NotFound';
     is $@->name, 'bar';
     like $@, qr{\QService 'bar' not found}, 'stringifies';
+    invalid $wire, 'bar', 'NotFound', qr{\QService 'bar' not found};
 };
 
 subtest "service with both value and class/extends" => sub {
@@ -59,6 +61,7 @@ subtest "service with both value and class/extends" => sub {
         throws_ok { $wire->get( 'foo' ) } 'Beam::Wire::Exception::InvalidConfig';
         is $@->name, 'foo';
         like $@, qr{\QInvalid config for service 'foo': "value" cannot be used with "class" or "extends"}, 'stringifies';
+        invalid $wire, 'foo', 'InvalidConfig', qr{\QInvalid config for service 'foo': "value" cannot be used with "class" or "extends"};
     };
     subtest "extends + value" => sub {
         my $wire;
@@ -78,6 +81,7 @@ subtest "service with both value and class/extends" => sub {
         throws_ok { $wire->get( 'foo' ) } 'Beam::Wire::Exception::InvalidConfig';
         is $@->name, 'foo';
         like $@, qr{\QInvalid config for service 'foo': "value" cannot be used with "class" or "extends"}, 'stringifies';
+        invalid $wire, 'foo', 'InvalidConfig', qr{\QInvalid config for service 'foo': "value" cannot be used with "class" or "extends"};
     };
     subtest "value in extended service" => sub {
         my $wire;
@@ -97,6 +101,7 @@ subtest "service with both value and class/extends" => sub {
         throws_ok { $wire->get( 'foo' ) } 'Beam::Wire::Exception::InvalidConfig';
         is $@->name, 'foo';
         like $@, qr{\QInvalid config for service 'foo': "value" cannot be used with "class" or "extends"}, 'stringifies';
+        invalid $wire, 'foo', 'InvalidConfig', qr{\QInvalid config for service 'foo': "value" cannot be used with "class" or "extends"};
     };
 
     subtest "exception shows file name" => sub {
@@ -121,5 +126,13 @@ subtest "service with both value and class/extends" => sub {
         like $@, qr{\QInvalid config for service 'foo': "value" cannot be used with "class" or "extends" in file '$path'}, 'stringifies';
     };
 };
+
+sub invalid ($$$$) {
+    my ( $wire, $name, $exception, $error_regex ) = @_;
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
+    throws_ok { $wire->validate() } "Beam::Wire::Exception::$exception";
+    is $@->name, $name;
+    like $@, $error_regex;
+}
 
 done_testing;
