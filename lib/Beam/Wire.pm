@@ -989,14 +989,39 @@ sub _load_config {
    return "HASH" eq ref $loader ? (values(%{$loader}))[0] : {};
 }
 
+# Check config file for known issues and report
+# Optionally attempt to get all configured items for complete test
+# Intended for use with beam-wire script
 sub validate {
+    my $error_count = 0;
     my @valid_dependency_nodes = qw( class method args extends lifecycle on config );
-    my ( $self, $instantiate ) = @_;
+    my ( $self, $instantiate, $show_all_errors ) = @_;
+
     while ( my ( $name, $v ) = each %{ $self->{config} } ) {
+
+        if ($instantiate) {
+            if ($show_all_errors) {
+                eval {
+                    $self->get($name);
+                };
+                print $@ if $@;
+            }
+            else {
+                $self->get($name);
+            }
+            next;
+        };
+
         my %config = %{ $self->get_config($name) };
         %config = $self->merge_config(%config);
 
         if ( exists $config{value} && ( exists $config{class} || exists $config{extends})) {
+            $error_count++;
+            if ($show_all_errors) {
+                print qq(Invalid config for service '$name': "value" cannot be used with "class" or "extends"\n);
+                next;
+            }
+
             Beam::Wire::Exception::InvalidConfig->throw(
                 name => $name,
                 file => $self->file,
@@ -1013,14 +1038,15 @@ sub validate {
         }
 
         unless ( $config{value} || $config{class} || $config{extends} ) {
-            warn "$name in " . $self->file . " missing 'value', 'class', or 'extends'; ignoring...\n";
             next;
         }
 
-        eval "require " . $config{class} if $config{class};
+        if ($config{class}) {
+            eval "require " . $config{class} if $config{class};
+        }
         #TODO: check method chain & serial
-        $self->get($name) if $instantiate;
     }
+    return $error_count;
 }
 
 =head1 EXCEPTIONS
