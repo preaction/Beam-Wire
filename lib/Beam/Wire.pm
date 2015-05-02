@@ -989,6 +989,66 @@ sub _load_config {
    return "HASH" eq ref $loader ? (values(%{$loader}))[0] : {};
 }
 
+# Check config file for known issues and report
+# Optionally attempt to get all configured items for complete test
+# Intended for use with beam-wire script
+sub validate {
+    my $error_count = 0;
+    my @valid_dependency_nodes = qw( class method args extends lifecycle on config );
+    my ( $self, $instantiate, $show_all_errors ) = @_;
+
+    while ( my ( $name, $v ) = each %{ $self->{config} } ) {
+
+        if ($instantiate) {
+            if ($show_all_errors) {
+                eval {
+                    $self->get($name);
+                };
+                print $@ if $@;
+            }
+            else {
+                $self->get($name);
+            }
+            next;
+        };
+
+        my %config = %{ $self->get_config($name) };
+        %config = $self->merge_config(%config);
+
+        if ( exists $config{value} && ( exists $config{class} || exists $config{extends})) {
+            $error_count++;
+            if ($show_all_errors) {
+                print qq(Invalid config for service '$name': "value" cannot be used with "class" or "extends"\n);
+                next;
+            }
+
+            Beam::Wire::Exception::InvalidConfig->throw(
+                name => $name,
+                file => $self->file,
+                error => '"value" cannot be used with "class" or "extends"',
+            );
+        }
+
+        if ( $config{config} ) {
+            my $conf_path = path( $config{config} );
+            if ( $self->file ) {
+                $conf_path = path( $self->file )->parent->child($conf_path);
+            }
+            %config = %{ $self->_load_config("$conf_path") };
+        }
+
+        unless ( $config{value} || $config{class} || $config{extends} ) {
+            next;
+        }
+
+        if ($config{class}) {
+            eval "require " . $config{class} if $config{class};
+        }
+        #TODO: check method chain & serial
+    }
+    return $error_count;
+}
+
 =head1 EXCEPTIONS
 
 If there is an error internal to Beam::Wire, an exception will be thrown. If there is an
