@@ -1,6 +1,14 @@
 Changelog for Beam-Wire
 
-1.013 2015-03-30T04:07:22
+1.014 2015-11-02T21:22:53
+ - allow empty hashref in service args
+ - add exception class for config errors
+ - upgrade perl in travis config
+ - remove ModuleBuild to prevent toolchain confusion
+ - Implement -a, allow -h to work without file
+ - Add beam-wire script with checks for all but method chain & serial
+
+1.013 2015-03-30T04:07:22Z
  - deprecate $method in dependency to get a value
  - add $call to get a dependency by calling a method
  - test that extended configs remain unchanged

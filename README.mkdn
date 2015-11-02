@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.013
+version 1.014
 
 # STATUS
 
@@ -552,6 +552,10 @@ The base exception class
 
 An exception creating a Beam::Wire object
 
+## Beam::Wire::Exception::Config
+
+An exception loading the configuration file.
+
 ## Beam::Wire::Exception::Service
 
 An exception with service information inside
@@ -570,6 +574,11 @@ The configuration is invalid:
 
 - Doug Bell <preaction@cpan.org>
 - Al Newkirk <anewkirk@ana.io>
+
+# CONTRIBUTORS
+
+- Bruce Armstrong <bruce@armstronganchor.net>
+- Bruce Armstrong <bruce@fortressofgeekdom.org>
 
 # COPYRIGHT AND LICENSE
 
