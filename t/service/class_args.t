@@ -21,6 +21,21 @@ subtest 'class args: hash' => sub {
     my $foo;
     lives_ok { $foo = $wire->get( 'foo' ) };
     cmp_deeply $foo->got_args, [ foo => 'bar' ];
+
+    subtest 'empty hash' => sub {
+        my $wire = Beam::Wire->new(
+            config => {
+                foo => {
+                    class => 'My::ArgsTest',
+                    args => { },
+                },
+            },
+        );
+
+        my $foo;
+        lives_ok { $foo = $wire->get( 'foo' ) };
+        cmp_deeply $foo->got_args, [ ];
+    };
 };
 
 subtest 'class args: array' => sub {
@@ -55,6 +70,21 @@ subtest 'class args: hashref' => sub {
     my $foo;
     lives_ok { $foo = $wire->get( 'foo' ) };
     cmp_deeply $foo->got_args, [{ foo => 'bar' }];
+
+    subtest 'empty hashref' => sub {
+        my $wire = Beam::Wire->new(
+            config => {
+                foo => {
+                    class => 'My::ArgsTest',
+                    args => [ { } ],
+                },
+            },
+        );
+
+        my $foo;
+        lives_ok { $foo = $wire->get( 'foo' ) };
+        cmp_deeply $foo->got_args, [ { } ];
+    };
 };
 
 subtest 'class args: arrayref' => sub {

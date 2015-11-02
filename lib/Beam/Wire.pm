@@ -880,7 +880,8 @@ sub find_refs {
 sub is_meta {
     my ( $self, $arg ) = @_;
     my $prefix = $self->meta_prefix;
-    return !grep { !/^\Q$prefix/ } keys %{$arg};
+    my @keys = keys %{ $arg };
+    return @keys && !grep { !/^\Q$prefix/ } @keys;
 }
 
 sub get_meta_names {
