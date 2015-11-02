@@ -16,6 +16,13 @@ subtest 'config file does not exist' => sub {
     like $@, qr{\QContainer file 'DOES_NOT_EXIST.yml' does not exist}, 'stringifies';
 };
 
+subtest 'config file cannot be read' => sub {
+    my $file = $SHARE_DIR->child( config => 'bad_char.yml' );
+    throws_ok { Beam::Wire->new( file => $file ) }
+        'Beam::Wire::Exception::Config';
+    like $@, qr{Could not load container file "$file": Error from config parser: .+};
+};
+
 subtest "get a service that doesn't exist" => sub {
     my $wire = Beam::Wire->new;
     throws_ok { $wire->get( 'foo' ) } 'Beam::Wire::Exception::NotFound';

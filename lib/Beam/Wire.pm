@@ -983,9 +983,20 @@ sub _deprecated {
 sub _load_config {
     my ( $self, $path ) = @_;
     local $Config::Any::YAML::NO_YAML_XS_WARNING = 1;
-    my $loader = Config::Any->load_files( {
-        files  => [$path], use_ext => 1, flatten_to_hash => 1
-    } );
+
+    my $loader;
+    eval {
+        $loader = Config::Any->load_files( {
+            files  => [$path], use_ext => 1, flatten_to_hash => 1
+        } );
+    };
+    if ( $@ ) {
+        Beam::Wire::Exception::Config->throw(
+            file => $self->file,
+            config_error => $@,
+        );
+    }
+
    return "HASH" eq ref $loader ? (values(%{$loader}))[0] : {};
 }
 
@@ -1087,6 +1098,38 @@ has attr => (
     is => 'ro',
     isa => Str,
     required => 1,
+);
+
+=head2 Beam::Wire::Exception::Config
+
+An exception loading the configuration file.
+
+=cut
+
+package Beam::Wire::Exception::Config;
+use Moo;
+use Types::Standard qw( :all );
+extends 'Beam::Wire::Exception';
+
+has file => (
+    is          => 'ro',
+    isa         => Maybe[InstanceOf['Path::Tiny']],
+);
+
+has config_error => (
+    is => 'ro',
+    isa => Str,
+    required => 1,
+);
+
+has '+error' => (
+    lazy => 1,
+    default => sub {
+        my ( $self ) = @_;
+        return sprintf 'Could not load container file "%s": Error from config parser: %s',
+            $self->file,
+            $self->config_error;
+    },
 );
 
 =head2 Beam::Wire::Exception::Service
