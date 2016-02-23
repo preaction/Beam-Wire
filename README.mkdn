@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.014
+version 1.015
 
 # STATUS
 
@@ -579,7 +579,7 @@ The configuration is invalid:
 
 - Bruce Armstrong <bruce@armstronganchor.net>
 - Bruce Armstrong <bruce@fortressofgeekdom.org>
-- Kent Fredric &lt;kentnl@cpan.org>
+- Kent Fredric <kentnl@cpan.org>
 
 # COPYRIGHT AND LICENSE
 

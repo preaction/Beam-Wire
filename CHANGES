@@ -1,6 +1,13 @@
 Changelog for Beam-Wire
 
-1.014 2015-11-02T21:22:53
+1.015 2016-02-23T14:33:00
+ - remove Build.PL
+ - Add META.json to the built dist
+ - Avoid using YAML::XS 0.61 where possible
+ - fix minimum test prereqs
+ - update travis config to test core, hide modules
+
+1.014 2015-11-02T21:22:53Z
  - allow empty hashref in service args
  - add exception class for config errors
  - upgrade perl in travis config
