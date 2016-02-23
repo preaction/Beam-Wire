@@ -579,6 +579,7 @@ The configuration is invalid:
 
 - Bruce Armstrong <bruce@armstronganchor.net>
 - Bruce Armstrong <bruce@fortressofgeekdom.org>
+- Kent Fredric &lt;kentnl@cpan.org>
 
 # COPYRIGHT AND LICENSE
 

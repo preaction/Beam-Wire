@@ -26,5 +26,7 @@ on 'test' => sub {
 };
 
 on 'configure' => sub {
+  requires "CPAN::Meta::Requirements" => "2.120620";
   requires "ExtUtils::MakeMaker" => "0";
+  requires "Module::Metadata" => "0";
 };

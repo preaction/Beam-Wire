@@ -10,7 +10,9 @@ my %WriteMakefileArgs = (
   "ABSTRACT" => "Lightweight Dependency Injection Container",
   "AUTHOR" => "Doug Bell <preaction\@cpan.org>, Al Newkirk <anewkirk\@ana.io>",
   "CONFIGURE_REQUIRES" => {
-    "ExtUtils::MakeMaker" => 0
+    "CPAN::Meta::Requirements" => "2.120620",
+    "ExtUtils::MakeMaker" => 0,
+    "Module::Metadata" => 0
   },
   "DISTNAME" => "Beam-Wire",
   "EXE_FILES" => [],
@@ -66,6 +68,10 @@ my %FallbackPrereqs = (
   "YAML" => 0
 );
 
+# inserted by Dist::Zilla::Plugin::DynamicPrereqs 0.019
+# Breaks LoadFile(path(...))
+has_module('YAML::XS','== 0.61') and requires('YAML::XS','0.62');
+
 
 unless ( eval { ExtUtils::MakeMaker->VERSION(6.63_03) } ) {
   delete $WriteMakefileArgs{TEST_REQUIRES};
@@ -77,3 +83,36 @@ delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
   unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
 
 WriteMakefile(%WriteMakefileArgs);
+
+# inserted by Dist::Zilla::Plugin::DynamicPrereqs 0.019
+sub _add_prereq {
+  my ($mm_key, $module, $version_or_range) = @_;
+  warn "$module already exists in $mm_key -- need to do a sane metamerge!"
+    if exists $WriteMakefileArgs{$mm_key}{$module}
+      and $WriteMakefileArgs{$mm_key}{$module} ne ($version_or_range || 0);
+  warn "$module already exists in FallbackPrereqs -- need to do a sane metamerge!"
+    if exists $FallbackPrereqs{$module} and $FallbackPrereqs{$module} ne ($version_or_range || 0);
+  $WriteMakefileArgs{$mm_key}{$module} = $FallbackPrereqs{$module} = $version_or_range || 0;
+  return;
+}
+
+sub has_module {
+  my ($module, $version_or_range) = @_;
+  require Module::Metadata;
+  my $mmd = Module::Metadata->new_from_module($module);
+  return undef if not $mmd;
+  return $mmd->version($module) if not defined $version_or_range;
+
+  require CPAN::Meta::Requirements;
+  my $req = CPAN::Meta::Requirements->new;
+  $req->add_string_requirement($module => $version_or_range);
+  return 1 if $req->accepts_module($module => $mmd->version($module));
+  return 0;
+}
+
+sub requires { goto &runtime_requires }
+
+sub runtime_requires {
+  my ($module, $version_or_range) = @_;
+  _add_prereq(PREREQ_PM => $module, $version_or_range);
+}
