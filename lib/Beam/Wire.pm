@@ -760,6 +760,13 @@ sub create_service {
     }
 
     use_module( $service_info{class} );
+
+    if ( my $with = $service_info{with} ) {
+        my @roles = ref $with ? @{ $with } : ( $with );
+        my $class = Moo::Role->create_class_with_roles( $service_info{class}, @roles );
+        $service_info{class} = $class;
+    }
+
     my $method = $service_info{method} || "new";
     my $service;
     if ( ref $method eq 'ARRAY' ) {
@@ -777,11 +784,6 @@ sub create_service {
     else {
         my @args = $self->parse_args( $name, @service_info{"class","args"} );
         $service = $service_info{class}->$method( @args );
-    }
-
-    if ( my $with = $service_info{with} ) {
-        my @roles = ref $with ? @{ $with } : ( $with );
-        Moo::Role->apply_roles_to_object( $service, @roles );
     }
 
     if ( $service_info{on} ) {
