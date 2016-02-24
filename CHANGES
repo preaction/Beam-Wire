@@ -1,6 +1,9 @@
 Changelog for Beam-Wire
 
-1.015 2016-02-23T14:33:00
+1.016 2016-02-24T23:37:58
+ - Compose Roles _before_ instantiation so attrs will work in init
+
+1.015 2016-02-23T14:33:00Z
  - remove Build.PL
  - Add META.json to the built dist
  - Avoid using YAML::XS 0.61 where possible
