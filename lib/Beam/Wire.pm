@@ -1,5 +1,46 @@
 package Beam::Wire;
+
 # ABSTRACT: Lightweight Dependency Injection Container
+
+=head1 SYNOPSIS
+
+    # wire.yml
+    captain:
+        class: Person
+        args:
+            name: Malcolm Reynolds
+            rank: Captain
+
+    # script.pl
+    use Beam::Wire;
+    my $wire = Beam::Wire->new( file => 'wire.yml' );
+    my $captain = $wire->get( 'captain' );
+    print $captain->name; # "Malcolm Reynolds"
+
+=head1 DESCRIPTION
+
+Beam::Wire is a configuration module and a dependency injection
+container. In addition to complex data structures, Beam::Wire configures
+and creates plain old Perl objects.
+
+A dependency injection (DI) container creates an inversion of control:
+Instead of manually creating all the dependent objects (also called
+"services") before creating the main object that we actually want, a DI
+container handles that for us: We describe the relationships between
+objects, and the objects get built as needed.
+
+Dependency injection is sometimes called the opposite of garbage
+collection. Rather than ensure objects are destroyed in the right order,
+dependency injection makes sure objects are created in the right order.
+
+Using Beam::Wire in your application brings great flexibility,
+allowing users to easily add their own code to customize how your
+project behaves.
+
+For an L<introduction to the Beam::Wire service configuration format,
+see Beam::Wire::Help::Config|Beam::Wire::Help::Config>.
+
+=cut
 
 use strict;
 use warnings;
@@ -13,472 +54,12 @@ use Path::Tiny qw( path );
 use File::Basename qw( dirname );
 use Types::Standard qw( :all );
 
-=head1 SYNOPSIS
-
-    # wire.yml
-
-    dbh:
-        class: 'DBI'
-        method: connect
-        args:
-            - 'dbi:mysql:dbname'
-            - {
-                PrintError: 1
-              }
-
-    # myscript.pl
-
-    use Beam::Wire;
-
-    my $wire = Beam::Wire->new( file => 'wire.yml' );
-    my $dbh  = $wire->get( 'dbh' );
-               $wire->set( 'dbh' => DBI->new( 'dbi:pgsql:dbname' ) );
-
-=head1 DESCRIPTION
-
-Beam::Wire is a dependency injection (DI) container. A DI (dependency injection)
-container is a framework/mechanism where dependency creation and instantiation is
-handled automatically (e.g. creates instances of classes that implement a given
-dependency interface on request). DI does not require a container, in-fact, DI
-without a container is possible and simply infers that dependency creation isn't
-automatically handled for you (i.e. you have to write code to instantiate the
-dependencies manually).
-
-Dependency injection (DI) at it's core is about creating loosely coupled code by
-separating construction logic from application logic. This is done by pushing
-the creation of services (dependencies) to the entry point(s) and writing the
-application logic so that dependencies are provided for its components. The
-application logic doesn't know or care how it is supplied with its dependencies;
-it just requires them and therefore receives them.
-
-=head1 OVERVIEW
-
-Beam::Wire loads a configuration L<file|file> and stores the specified configuration
-in the L<config|config attribute> which is used to resolve it's services. This section
-will give you an overview of how to declare dependencies and services, and shape
-your configuration file.
-
-=head2 WHAT IS A DEPENDENCY?
-
-A dependency is a declaration of a component requirement. In layman's terms, a
-dependency is a class attribute (or any value required for class construction)
-which will likely be used to define services.
-
-=head2 WHAT IS A SERVICE?
-
-A service is a resolvable interface which may be selected and implemented on
-behalf of a dependent component, or instantiated and returned per request. In
-layman's terms, a service is a class configuration which can be used
-independently or as a dependent of other services.
-
-=head2 HOW ARE SERVICES CONFIGURED?
-
-    # databases.yml
-
-    production_db:
-        class: 'DBI'
-        method: connect
-        args:
-            - 'dbi:mysql:master'
-            - { PrintError: 0, RaiseError: 0 }
-    production_cache:
-        class: 'CHI'
-        args:
-            driver: 'DBI'
-            dbh: { $ref: 'production_db' }
-    development_db:
-        class: 'DBI'
-        method: connect
-        args:
-            - 'dbi:mysql:slave'
-            - { PrintError: 1, RaiseError: 1 }
-    development_cache:
-        class: 'CHI'
-        args:
-            driver: 'DBI'
-            dbh: { $ref: 'development_db' }
-
-=head3 Service Attributes
-
-=head4 class
-
-The class to instantiate. The class will be loaded and the C<method> (below)
-method called.
-
-=head4 method
-
-The class method to call to construct the object. Defaults to C<new>.
-
-If multiple methods are needed to initialize an object, C<method> can be an
-arrayref of hashrefs, like so:
-
-    my_service:
-        class: My::Service
-        method:
-            - method: new
-              args:
-                foo: bar
-            - method: set_baz
-              args:
-                - Fizz
-
-In this example, first we call C<My::Service->new( foo => "bar" );> to get our
-object, then we call C<$obj->set_baz( "Fizz" );> as a further initialization
-step.
-
-To chain methods together, add C<return: chain>:
-
-    my_service:
-        class: My::Service
-        method:
-            - method: new
-              args:
-                foo: bar
-            - method: set_baz
-              return: chain
-              args:
-                - Fizz
-            - method: set_buzz
-              return: chain
-              args:
-                - Bork
-
-This example is equivalent to the following code:
-
-    my $service = My::Service->new( foo => "bar" )->set_baz( "Fizz" )
-                ->set_buzz( "Bork" );
-
-=head4 args
-
-The arguments to the C<method> method. This can be either an array or a hash,
-like so:
-
-    # array
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - 'dbi:mysql:dbname'
-
-    # hash
-    cache:
-        class: CHI
-        args:
-            driver: Memory
-            max_size: 16MB
-
-Using the array of arguments, you can give arrayrefs or hashrefs:
-
-    # arrayref of arrayrefs
-    names:
-        class: 'Set::CrossProduct'
-        args:
-            -
-                - [ 'Foo', 'Barkowictz' ]
-                - [ 'Bar', 'Foosmith' ]
-                - [ 'Baz', 'Bazleton' ]
-
-    # arrayrefs of hashrefs
-    cache:
-        class: CHI
-        args:
-            -   driver: Memory
-                max_size: 16MB
-
-=head4 extends
-
-Inherit and override attributes from another service. 
-
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - 'dbi:mysql:dbname'
-    dbh_dev:
-        extends: 'dbh'
-        args:
-            - 'dbi:mysql:devdb'
-
-Hash C<args> will be merged seperately, like so:
-
-    activemq:
-        class: My::ActiveMQ
-        args:
-            host: example.com
-            port: 61312
-            user: root
-            password: 12345
-    activemq_dev:
-        extends: 'activemq'
-        args:
-            host: dev.example.com
-
-C<activemq_dev> will get the C<port>, C<user>, and C<password> arguments
-from the base service C<activemq>.
-
-=head4 with
-
-Compose roles into the service object.
-
-    app:
-        class: My::App
-        with: My::FeatureRole
-
-    otherapp:
-        class: My::App
-        with:
-            - My::FeatureRole
-            - My::OtherFeatureRole
-
-This lets you break features out into roles, and compose those roles a la carte
-on the fly. If you have 20 different optional features, it is difficult to create
-every possible combination of them. So, C<with> allows you to pick the features
-you want.
-
-=head4 lifecycle
-
-Control how your service is created. The default value, C<singleton>, will cache
-the resulting service and return it for every call to C<get()>. The other
-value, C<factory>, will create a new instance of the service every time:
-
-    today:
-        class: DateTime
-        method: today
-        lifecycle: factory
-        args:
-            time_zone: US/Chicago
-    report_yesterday:
-        class: My::Report
-        args:
-            date: { $ref: today, $method: add, $args: [ "days", "-1" ] }
-    report_today:
-        class: My::Report
-        args:
-            date: { $ref: today }
-
-C<DateTime->add> modifies the object and returns the newly-modified object (to
-allow for method chaining.) Without C<lifecycle: factory>, the C<today> service
-would become yesterday, making it hard to know what C<report_today> would
-report on.
-
-An C<eager> value will be created as soon as the container is created. If you
-have an object that registers itself upon instantiation, you can make sure your
-object is created as soon as possible by doing C<lifecycle: eager>.
-
-=head4 on
-
-Attach event listeners using L<Beam::Emitter|Beam::Emitter>.
-
-    emitter:
-        class: My::Emitter
-        on:
-            before_my_event:
-                $ref: listener
-                $sub: on_before_my_event
-            my_event:
-                - $ref: listener
-                  $sub: on_my_event
-                - $ref: other_listener
-                  $sub: on_my_event
-    listener:
-        class: My::Listener
-    other_listener:
-        class: My::Listener
-
-Now, when the C<emitter> fires off its events, they are dispatched to the
-appropriate listeners.
-
-In order to work around a bug in YAML.pm, you can also specify event listeners
-as an array of hashes:
-
-    emitter:
-        class: My::Emitter
-        on:
-            - before_my_event:
-                $ref: listener
-                $sub: on_before_my_event
-            - my_event:
-                $ref: listener
-                $sub: on_my_event
-            - my_event:
-                $ref: other_listener
-                $sub: on_my_event
-
-=head3 Config Services
-
-A config service allows you to read a config file and use it as a service, giving
-all or part of it to other objects in your container.
-
-To create a config service, use the C<config> key. The value is the path to the
-file to read. By default, YAML, JSON, XML, and Perl files are supported (via
-L<Config::Any>).
-
-    # db_config.yml
-    dsn: 'dbi:mysql:dbname'
-    user: 'mysql'
-    pass: '12345'
-
-    # container.yml
-    db_config:
-        config: db_config.yml
-
-You can pass in the entire config to an object using C<$ref>:
-
-    # container.yml
-    db_config:
-        config: db_config.yml
-    dbobj:
-        class: My::DB
-        args:
-            conf:
-                $ref: db_config
-
-If you only need the config file once, you can create an anonymous config
-object.
-
-    # container.yml
-    dbobj:
-        class: My::DB
-        args:
-            conf:
-                $config: db_config.yml
-
-The config file can be used as all the arguments to the service:
-
-    # container.yml
-    dbobj:
-        class: My::DB
-        args:
-            $config: db_config.yml
-
-In this example, the constructor will be called like:
-
-    my $dbobj = My::DB->new(
-        dsn => 'dbi:mysql:dbname',
-        user => 'mysql',
-        pass => '12345',
-    );
-
-You can reference individual items in a configuration hash using C<$path>
-references:
-
-    # container.yml
-    db_config:
-        config: db_config.yml
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - $ref: db_config
-              $path: /dsn
-            - $ref: db_config
-              $path: /user
-            - $ref: db_config
-              $path: /pass
-
-B<NOTE:> You cannot use C<$path> and anonymous config objects.
-
-
-=head3 Inner Containers
-
-Beam::Wire objects can hold other Beam::Wire objects!
-
-    inner:
-        class: Beam::Wire
-        args:
-            config:
-                dbh:
-                    class: DBI
-                    method: connect
-                    args:
-                        - 'dbi:mysql:dbname'
-                cache:
-                    class: CHI
-                    args:
-                        driver: Memory
-                        max_size: 16MB
-
-Inner containers' contents can be reached from outer containers by separating
-the names with a slash character:
-
-    my $dbh = $wire->get( 'inner/dbh' );
-
-=head3 Inner Files
-
-    inner:
-        class: Beam::Wire
-        args:
-            file: inner.yml
-
-Inner containers can be created by reading files just like the main container.
-If the C<file> attribute is relative, the parent's C<dir> attribute will be
-added:
-
-    # share/parent.yml
-    inner:
-        class: Beam::Wire
-        args:
-            file: inner.yml
-
-    # share/inner.yml
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - 'dbi:sqlite:data.db'
-
-    # myscript.pl
-    use Beam::Wire;
-
-    my $container = Beam::Wire->new(
-        file => 'share/parent.yml',
-    );
-
-    my $dbh = $container->get( 'inner/dbh' );
-
-If more control is needed, you can set the L<dir|dir attribute> on the parent
-container. If even more control is needed, you can make a subclass of Beam::Wire.
-
-=head3 Service/Configuration References
-
-    chi:
-        class: CHI
-        args:
-            driver: 'DBI'
-            dbh: { $ref: 'dbh' }
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - { $ref: dsn }
-            - { $ref: usr }
-            - { $ref: pwd }
-    dsn:
-        value: "dbi:SQLite:memory:"
-    usr:
-        value: "admin"
-    pwd:
-        value: "s3cret"
-
-The reuse of service and configuration containers as arguments for other
-services is encouraged so we have provided a means of referencing those objects
-within your configuration. A reference is an arugment (a service argument) in
-the form of a hashref with a C<$ref> key whose value is the name of another
-service. Optionally, this hashref may contain a C<$path> key whose value is a
-L<Data::DPath|Data::DPath> search string which should return the found data
-structure from within the referenced service.
-
-It is also possible to use raw-values as services, this is done by configuring a
-service using a single key/value pair with a C<value> key whose value contains
-the raw-value you wish to reuse.
-
-=cut
-
 =attr file
 
-The file attribute contains the file path of the file where Beam::Wire container
-services are configured (typically a YAML file). The file's contents should form
-a single hashref. The keys will become the service names.
+The path of the file where services are configured (typically a YAML
+file). The file's contents should be a single hashref. The keys are
+service names, and the values are L<service
+configurations|Beam::Wire::Help::Config>.
 
 =cut
 
@@ -495,9 +76,9 @@ has file => (
 
 =attr dir
 
-The dir attribute contains the directory path to use when searching for inner
-container files. Defaults to the directory which contains the file specified by
-the L<file|file attribute>.
+The directory path to use when searching for inner container files.
+Defaults to the directory which contains the file specified by the
+L<file attribute|/file>.
 
 =cut
 
@@ -516,9 +97,15 @@ has dir => (
 
 =attr config
 
-The config attribute contains a hashref of service configurations. This data is
-loaded by L<Config::Any|Config::Any> using the file specified by the
-L<file|file attribute>.
+The raw configuration data. By default, this data is loaded by
+L<Config::Any|Config::Any> using the file specified by the L</file|file
+attribute>.
+
+See L<Beam::Wire::Help::Config for details on what the configuration
+data structure looks like|Beam::Wire::Help::Config>.
+
+If you don't want to load a file, you can specify this attribute in the
+Beam::Wire constructor.
 
 =cut
 
@@ -537,7 +124,9 @@ sub _build_config {
 
 =attr services
 
-A hashref of services. If you have any services already built, add them here.
+A hashref of cached services built from the L<configuration|/config>. If
+you want to inject a pre-built object for other services to depend on,
+add it here.
 
 =cut
 
@@ -559,7 +148,7 @@ sub _build_services {
 The character that begins a meta-property inside of a service's C<args>. This
 includes C<$ref>, C<$path>, C<$method>, and etc...
 
-The default value is '$'. The empty string is allowed.
+The default value is C<$>. The empty string is allowed.
 
 =cut
 
@@ -569,13 +158,17 @@ has meta_prefix => (
     default => sub { q{$} },
 );
 
-=method get( name, [ overrides ] )
+=method get
 
-The get method resolves and returns the service named C<name>.
+    my $service = $wire->get( $name );
+    my $service = $wire->get( $name, %overrides )
 
-C<overrides> may be a list of name-value pairs. If specified, get()
-will create an anonymous service that extends the C<name> service
-with the given config overrides:
+The get method resolves and returns the service named C<$name>, creating
+it, if necessary, with L<the create_service method|/create_service>.
+
+C<%overrides> is an optional list of name-value pairs. If specified,
+get() will create an new, anonymous service that extends the named
+service with the given config overrides. For example:
 
     # test.pl
     use Beam::Wire;
@@ -588,11 +181,22 @@ with the given config overrides:
             },
         },
     );
+
     my $foo = $wire->get( 'foo', args => { text => 'Hello, Chicago!' } );
     print $foo; # prints "Hello, Chicago!"
 
 This allows you to create factories out of any service, overriding service
 configuration at run-time.
+
+If C<$name> contains a slash (C</>) character (e.g. C<foo/bar>), the left
+side (C<foo>) will be used as the name of an inner container, and the
+right side (C<bar>) is a service inside that container. For example,
+these two lines are equivalent:
+
+    $bar = $wire->get( 'foo/bar' );
+    $bar = $wire->get( 'foo' )->get( 'bar' );
+
+Inner containers can be nested as deeply as desired (C<foo/bar/baz/fuzz>).
 
 =cut
 
@@ -625,12 +229,19 @@ sub get {
 
 =method set
 
-The set method configures and stores the specified service.
+    $wire->set( $name => $service );
+
+The set method configures and stores the specified C<$service> with the
+specified C<$name>. Use this to add or replace built services.
+
+Like L<the get() method, above|/get>, C<$name> can contain a slash (C</>)
+character to traverse through nested containers.
 
 =cut
 
 ## no critic ( ProhibitAmbiguousNames )
-# This was named set() before I started using Perl::Critic
+# This was named set() before I started using Perl::Critic, and will
+# continue to be named set() now that I no longer use Perl::Critic
 sub set {
     my ( $self, $name, $service ) = @_;
     if ( $name =~ q{/} ) {
@@ -643,7 +254,11 @@ sub set {
 
 =method get_config
 
-Get the config with the given name, searching inner containers if required
+    my $conf = $wire->get_config( $name );
+
+Get the config with the given C<$name>. Like L<the get() method,
+above|/get>, C<$name> can contain slash (C</>) characters to traverse
+through nested containers.
 
 =cut
 
@@ -658,78 +273,104 @@ sub get_config {
     return $self->config->{$name};
 }
 
-# TODO: Refactor fix_refs and find_refs into an iterator
-sub fix_refs {
-    my ( $self, $container_name, @args ) = @_;
-    my @out;
-    my %meta = $self->get_meta_names;
-    for my $arg ( @args ) {
-        if ( ref $arg eq 'HASH' ) {
-            if ( $self->is_meta( $arg ) ) {
-                my %new = ();
-                for my $key ( @meta{qw( ref extends )} ) {
-                    if ( $arg->{$key} ) {
-                        $new{ $key } = join( q{/}, $container_name, $arg->{$key} );
-                    }
-                }
-                push @out, \%new;
-            }
-            else {
-                push @out, { $self->fix_refs( $container_name, %{$arg} ) };
-            }
-        }
-        elsif ( ref $arg eq 'ARRAY' ) {
-            push @out, [ map { $self->fix_refs( $container_name, $_ ) } @{$arg} ];
-        }
-        else {
-            push @out, $arg; # simple scalars
-        }
-    }
-    return @out;
-}
+=method create_service
 
-sub parse_args {
-    my ( $self, $for, $class, $args ) = @_;
-    return if not $args;
-    my @args;
-    if ( ref $args eq 'ARRAY' ) {
-        @args = $self->find_refs( $for, @{$args} );
-    }
-    elsif ( ref $args eq 'HASH' ) {
-        # Hash args could be a ref
-        # Subcontainers cannot scan for refs in their configs
-        if ( $class->isa( 'Beam::Wire' ) ) {
-            my %args = %{$args};
-            my $config = delete $args{config};
-            # Relative subcontainer files should be from the current
-            # container's directory
-            if ( exists $args{file} && !path( $args{file} )->is_absolute ) {
-                $args{file} = $self->dir->child( $args{file} );
-            }
-            @args = $self->find_refs( $for, %args );
-            if ( $config ) {
-                push @args, config => $config;
-            }
-        }
-        else {
-            my ( $maybe_ref ) = $self->find_refs( $for, $args );
-            if ( blessed $maybe_ref ) {
-                @args = ( $maybe_ref );
-            }
-            else {
-                @args   = ref $maybe_ref eq 'HASH' ? %$maybe_ref
-                        : ref $maybe_ref eq 'ARRAY' ? @$maybe_ref
-                        : ( $maybe_ref );
-            }
-        }
-    }
-    else {
-        # Try anyway?
-        @args = $args;
-    }
+    my $service = $wire->create_service( $name, %config );
 
-    return @args;
-}
+Create the service with the given C<$name> and C<%config>. Config can
+contain the following keys:
+
+=over 4
+
+=item class
+
+The class name of an object to create. Can be combined with C<method>,
+and C<args>.
+
+=item args
+
+The arguments to the constructor method. Used with C<class> and
+C<method>. Can be a simple value, or a reference to an array or
+hash which will be dereferenced and passed in to the constructor
+as a list.
+
+=item method
+
+The method to call to create the object. Only used with C<class>.
+Defaults to C<"new">.
+
+This can also be an array of hashes which describe a list of methods
+that will be called on the object. The first method should create the
+object, and each subsequent method can be used to modify the object. The
+hashes should contain a C<method> key, which is a string containing the
+method to call, and optionally C<args> and C<return> keys. The C<args>
+key works like the top-level C<args> key, above. The optional C<return>
+key can have the special value C<"chain">, which will use the return
+value from the method as the value for the service (L<The tutorial shows
+examples of this|Beam::Wire::Help::Config/Multiple Constructor
+Methods>).
+
+If an array is used, the top-level C<args> key is not used.
+
+=item value
+
+The value of this service. Can be a simple value, or a reference to an
+array or hash. This value will be simply returned by this method, and is
+mostly useful when using container files.
+
+C<value> can not be used with C<class> or C<extends>.
+
+=item config
+
+The path to a configuration file, relative to L<the dir attribute|/dir>.
+The file will be read with L<Config::Any>, and the resulting data
+structure returned.
+
+=item extends
+
+The name of a service to extend. The named service's configuration will
+be merged with this configuration (via L<the merge_config
+method|/merge_config>).
+
+This can be used in place of the C<class> key if the extended configuration
+contains a class.
+
+=item with
+
+Compose a role into the object's class before creating the object. This
+can be a single string, or an array reference of strings which are roles
+to combine.
+
+This uses L<Moo::Role|Moo::Role> and L<the create_class_with_roles
+method|Role::Tiny/create_class_with_roles>, which should work with any
+class (as it uses L<the Role::Tiny module|Role::Tiny> under the hood).
+
+This can be used with the C<class> key.
+
+=item on
+
+Attach an event handler to a L<Beam::Emitter subclass|Beam::Emitter>. This
+is an array of hashes of event names and handlers. A handler is made from
+a service reference (C<$ref> or an anonymous service), and a subroutine to
+call on that service (C<$sub>).
+
+For example:
+
+    emitter:
+        class: My::Emitter
+        on:
+            - my_event:
+                $ref: my_handler
+                $sub: on_my_event
+
+This can be used with the C<class> key.
+
+=back
+
+This method uses L<the parse_args method|/parse_args> to parse the C<args> key,
+L<resolving references|resolve_ref> as needed.
+
+=cut
 
 sub create_service {
     my ( $self, $name, %service_info ) = @_;
@@ -820,6 +461,23 @@ sub create_service {
     return $service;
 }
 
+=method merge_config
+
+    my %merged = $wire->merge_config( %config );
+
+If C<%config> contains an C<extends> key, merge the extended config together
+with this one, returning the merged service configuration. This works recursively,
+so a service can extend a service that extends another service just fine.
+
+When merging, hashes are combined, with the child configuration taking
+precedence. The C<args> key is handled specially to allow a hash of
+args to be merged.
+
+The configuration returned is a safe copy and can be modified without
+effecting the original config.
+
+=cut
+
 sub merge_config {
     my ( $self, %service_info ) = @_;
     if ( $service_info{ extends } ) {
@@ -843,6 +501,85 @@ sub merge_config {
     }
     return %service_info;
 }
+
+=method parse_args
+
+    my @args = $wire->parse_args( $for_name, $class, $args );
+
+Parse the arguments (C<$args>) for the given service (C<$for_name>) with
+the given class (C<$class>).
+
+C<$args> can be an array reference, a hash reference, or a simple
+scalar. The arguments will be searched for references using L<the
+find_refs method|/find_refs>, and then a list of arguments will be
+returned, ready to pass to the object's constructor.
+
+Nested containers are handled specially by this method: Their inner
+references are not resolved by the parent container. This ensures that
+references are always relative to the container they're in.
+
+=cut
+
+sub parse_args {
+    my ( $self, $for, $class, $args ) = @_;
+    return if not $args;
+    my @args;
+    if ( ref $args eq 'ARRAY' ) {
+        @args = $self->find_refs( $for, @{$args} );
+    }
+    elsif ( ref $args eq 'HASH' ) {
+        # Hash args could be a ref
+        # Subcontainers cannot scan for refs in their configs
+        if ( $class->isa( 'Beam::Wire' ) ) {
+            my %args = %{$args};
+            my $config = delete $args{config};
+            # Relative subcontainer files should be from the current
+            # container's directory
+            if ( exists $args{file} && !path( $args{file} )->is_absolute ) {
+                $args{file} = $self->dir->child( $args{file} );
+            }
+            @args = $self->find_refs( $for, %args );
+            if ( $config ) {
+                push @args, config => $config;
+            }
+        }
+        else {
+            my ( $maybe_ref ) = $self->find_refs( $for, $args );
+            if ( blessed $maybe_ref ) {
+                @args = ( $maybe_ref );
+            }
+            else {
+                @args   = ref $maybe_ref eq 'HASH' ? %$maybe_ref
+                        : ref $maybe_ref eq 'ARRAY' ? @$maybe_ref
+                        : ( $maybe_ref );
+            }
+        }
+    }
+    else {
+        # Try anyway?
+        @args = $args;
+    }
+
+    return @args;
+}
+
+=method find_refs
+
+    my @resolved = $wire->find_refs( $for_name, @args );
+
+Go through the C<@args> and recursively resolve any references and
+services found inside, returning the resolved result. References are
+identified with L<the is_meta method|/is_meta>.
+
+If a reference contains a C<$ref> key, it will be resolved by L<the
+resolve_ref method|/resolve_ref>. Otherwise, the reference will be
+treated as an anonymous service, and passed directly to L<the
+create_service method|/create_service>.
+
+This is used when L<creating a service|create_service> to ensure all
+dependencies are created first.
+
+=cut
 
 sub find_refs {
     my ( $self, $for, @args ) = @_;
@@ -879,12 +616,35 @@ sub find_refs {
     return @out;
 }
 
+=method is_meta
+
+    my $is_meta = $wire->is_meta( $ref_hash );
+
+Returns true if the given hash reference describes some kind of
+Beam::Wire service. This is used to identify service configuration
+hashes inside of larger data structures.
+
+A service hash reference must contain at least one key, and must not
+contain any keys that are not meta-keys (as returned by L<the
+get_meta_names method|/get_meta_names>).
+
+=cut
+
 sub is_meta {
     my ( $self, $arg ) = @_;
     my $prefix = $self->meta_prefix;
     my @keys = keys %{ $arg };
     return @keys && !grep { !/^\Q$prefix/ } @keys;
 }
+
+=method get_meta_names
+
+    my %meta_keys = $wire->get_meta_names;
+
+Get all the possible service keys with the L<meta prefix|/meta_prefix> already
+attached.
+
+=cut
 
 sub get_meta_names {
     my ( $self ) = @_;
@@ -901,6 +661,65 @@ sub get_meta_names {
     );
     return wantarray ? %meta : \%meta;
 }
+
+=method resolve_ref
+
+    my @value = $wire->resolve_ref( $for_name, $ref_hash );
+
+Resolves the given dependency from the configuration hash (C<$ref_hash>)
+for the named service (C<$for_name>). Reference hashes contain the
+following keys:
+
+=over 4
+
+=item $ref
+
+The name of a service in the container. Required.
+
+=item $path
+
+A data path to pick some data out of the reference. Useful with C<value>
+and C<config> services.
+
+    # container.yml
+    bounties:
+        value:
+            malcolm: 50000
+            zoe: 35000
+            simon: 100000
+
+    captain:
+        class: Person
+        args:
+            name: Malcolm Reynolds
+            bounty:
+                $ref: bounties
+                $path: /malcolm
+
+=item $call
+
+Call a method on the referenced object and use the resulting value. This
+may be a string, which will be the method name to call, or a hash with
+C<$method> and C<$args>, which are the method name to call and the
+arguments to that method, respectively.
+
+    captain:
+        class: Person
+        args:
+            name: Malcolm Reynolds
+            location:
+                $ref: beacon
+                $call: get_location
+            bounty:
+                $ref: news
+                $call:
+                    $method: get_bounty
+                    $args:
+                        name: mreynolds
+
+=back
+
+=cut
 
 sub resolve_ref {
     my ( $self, $for, $arg ) = @_;
@@ -947,8 +766,54 @@ sub resolve_ref {
     return @ref;
 }
 
+=method fix_refs
+
+    my @fixed = $wire->fix_refs( $for_name, @args );
+
+Similar to L<the find_refs method|/find_refs>. This method searches
+through the C<@args> and recursively fixes any reference paths to be
+absolute. References are identified with L<the is_meta
+method|/is_meta>.
+
+This is used by L<the get_config method|/get_config> to ensure that the
+configuration can be passed directly in to L<the create_service
+method|create_service>.
+
+=cut
+
+sub fix_refs {
+    my ( $self, $container_name, @args ) = @_;
+    my @out;
+    my %meta = $self->get_meta_names;
+    for my $arg ( @args ) {
+        if ( ref $arg eq 'HASH' ) {
+            if ( $self->is_meta( $arg ) ) {
+                my %new = ();
+                for my $key ( @meta{qw( ref extends )} ) {
+                    if ( $arg->{$key} ) {
+                        $new{ $key } = join( q{/}, $container_name, $arg->{$key} );
+                    }
+                }
+                push @out, \%new;
+            }
+            else {
+                push @out, { $self->fix_refs( $container_name, %{$arg} ) };
+            }
+        }
+        elsif ( ref $arg eq 'ARRAY' ) {
+            push @out, [ map { $self->fix_refs( $container_name, $_ ) } @{$arg} ];
+        }
+        else {
+            push @out, $arg; # simple scalars
+        }
+    }
+    return @out;
+}
+
 
 =method new
+
+    my $wire = Beam::Wire->new( %attributes );
 
 Create a new container.
 
