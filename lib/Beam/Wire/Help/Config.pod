@@ -145,6 +145,44 @@ Which is the same as:
         rank => 'Pilot',
     } );
 
+=head2 Prefixed Metadata
+
+For brevity's sake, if your constructor takes a hash of arguments, you
+can configure your service using C<$class> instead:
+
+    # container.yml
+    simon:
+        $class: Person
+        name: Simon Tam
+        rank: Doctor
+
+    # container.pl
+    my $config = {
+        simon => {
+            '$class' => 'Person',
+            name => 'Simon Tam',
+            rank => 'Doctor',
+        },
+    };
+
+Which is the same as:
+
+    my $simon = Person->new( {
+        name => 'Simon Tam',
+        rank => 'Doctor',
+    } );
+
+This makes it easy to make a "default class" in your config file:
+
+    use Scalar::Util qw( blessed );
+    my $person = $wire->get( 'person' );
+    if ( !blessed $person ) {
+        $person = Person->new( %$person );
+    }
+
+By prefixing any metadata with the prefix character (default: C<$>), you
+can interleave your args and your metadata.
+
 =head1 OBJECT LIFECYCLE
 
 By default, services are lazy and cached. They are not created until
@@ -206,19 +244,16 @@ C<lifecycle> to C<eager>.
 
     # container.yml
     black_box:
-        class: Logger
-        lifecycle: eager
-        args:
-            log_level: warn
+        $class: Logger
+        $lifecycle: eager
+        log_level: warn
 
     # container.pl
     my $config = {
         black_box => {
-            class => 'Logger',
-            lifecycle => 'eager',
-            args => {
-                log_level => 'warn',
-            },
+            '$class' => 'Logger',
+            '$lifecycle' => 'eager',
+            log_level => 'warn',
         },
     };
 
@@ -485,6 +520,51 @@ object.
         args:
             cargo:
                 $config: manifest.yml
+
+=head2 Bare Services
+
+Additionally, any service that does not look like an object config (does
+not pass L<the is_meta method|Beam::Wire/is_meta>) will be treated like
+a bare service. A bare service is like a value service, except that
+references inside are resolved. With this, you can set up arrays and
+hashes of objects.
+
+    # container.yml
+    crew_list:
+        - $ref: malcolm
+        - $ref: zoe
+        - $ref: wash
+        - $ref: kaylee
+        - $ref: jayne
+    crew_manifest:
+        captain:
+            $ref: malcolm
+        pilot:
+            $ref: wash
+        engineer:
+            $ref: kaylee
+
+    # container.pl
+    my $config = {
+        crew_list => [
+            { '$ref' => 'malcolm' },
+            { '$ref' => 'zoe' },
+            { '$ref' => 'wash' },
+            { '$ref' => 'kaylee' },
+            { '$ref' => 'jayne' },
+        ],
+        crew_manifest => {
+            captain => {
+                '$ref' => 'malcolm',
+            },
+            pilot => {
+                '$ref' => 'wash',
+            },
+            engineer => {
+                '$ref' => 'kaylee',
+            },
+        },
+    };
 
 =head1 ADVANCED FEATURES
 

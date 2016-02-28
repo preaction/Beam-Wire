@@ -119,4 +119,35 @@ subtest 'class args: scalar' => sub {
     cmp_deeply $foo->got_args, [ 'foo' ];
 };
 
+subtest 'class args (raw): hashref' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            foo => {
+                '$class' => 'My::ArgsTest',
+                foo => 'bar',
+            },
+        },
+    );
+
+    my $foo;
+    lives_ok { $foo = $wire->get( 'foo' ) };
+    cmp_deeply $foo->got_args, [ foo => 'bar' ];
+};
+
+subtest 'class args (raw): with method' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            foo => {
+                '$class' => 'My::ArgsTest',
+                '$method' => 'new',
+                foo => 'bar',
+            },
+        },
+    );
+
+    my $foo;
+    lives_ok { $foo = $wire->get( 'foo' ) };
+    cmp_deeply $foo->got_args, [ foo => 'bar' ];
+};
+
 done_testing;

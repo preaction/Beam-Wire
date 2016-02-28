@@ -10,6 +10,10 @@ package Beam::Wire;
         args:
             name: Malcolm Reynolds
             rank: Captain
+    first_officer:
+        $class: Person
+        name: Zoë Alleyne Washburne
+        rank: Commander
 
     # script.pl
     use Beam::Wire;
@@ -206,9 +210,11 @@ sub get {
         my ( $container_name, $service ) = split m{/}, $name, 2;
         return $self->get( $container_name )->get( $service, %override );
     }
+
     if ( keys %override ) {
         return $self->create_service( "\$anonymous extends $name", %override, extends => $name );
     }
+
     my $service = $self->services->{$name};
     if ( !$service ) {
         my $config_ref = $self->get_config($name);
@@ -218,12 +224,19 @@ sub get {
                 file => $self->file,
             );
         }
-        my %config  = %{ $config_ref };
-        $service = $self->create_service( $name, %config );
-        if ( !$config{lifecycle} || lc $config{lifecycle} ne 'factory' ) {
-            $self->services->{$name} = $service;
+
+        if ( ref $config_ref eq 'HASH' && $self->is_meta( $config_ref ) ) {
+            my %config  = %{ $self->normalize_config( $config_ref ) };
+            $service = $self->create_service( $name, %config );
+            if ( !$config{lifecycle} || lc $config{lifecycle} ne 'factory' ) {
+                $self->services->{$name} = $service;
+            }
+        }
+        else {
+            $self->services->{$name} = $service = $self->find_refs( $name, $config_ref );
         }
     }
+
     return $service;
 }
 
@@ -271,6 +284,52 @@ sub get_config {
         return { $self->fix_refs( $container_name, %{$inner_config} ) };
     }
     return $self->config->{$name};
+}
+
+=method normalize_config
+
+    my $out_conf = $self->normalize_config( $in_conf );
+
+Normalize the given C<$in_conf> into to hash that L<the create_service
+method|/create_service> expects. This method allows a service to be
+defined with prefixed meta-names (C<$class> instead of C<class>) and
+the arguments specified without prefixes.
+
+For example, these two services are identical.
+
+    foo:
+        class: Foo
+        args:
+            fizz: buzz
+
+    foo:
+        $class: Foo
+        fizz: buzz
+
+The C<$in_conf> must be a hash, and must already pass L<an is_meta
+check|/is_meta>.
+
+=cut
+
+sub normalize_config {
+    my ( $self, $conf ) = @_;
+
+    my %meta = reverse $self->get_meta_names;
+
+    # Confs without prefixed keys can be used as-is
+    return $conf if !grep { $meta{ $_ } } keys %$conf;
+
+    my %out_conf;
+    for my $key ( keys %$conf ) {
+        if ( $meta{ $key } ) {
+            $out_conf{ $meta{ $key } } = $conf->{ $key };
+        }
+        else {
+            $out_conf{ args }{ $key } = $conf->{ $key };
+        }
+    }
+
+    return \%out_conf;
 }
 
 =method create_service
@@ -374,8 +433,10 @@ L<resolving references|resolve_ref> as needed.
 
 sub create_service {
     my ( $self, $name, %service_info ) = @_;
+
     # Compose the parent ref into the copy, in case the parent changes
     %service_info = $self->merge_config( %service_info );
+
     # value and class/extends are mutually exclusive
     # must check after merge_config in case parent config has class/value
     if ( exists $service_info{value} && (
@@ -488,7 +549,7 @@ sub merge_config {
                 file => $self->file,
             );
         }
-        my %base_config = %{$base_config_ref};
+        my %base_config = %{ $self->normalize_config( $base_config_ref ) };
         # Merge the args separately, to be a bit nicer about hashes of arguments
         my $args;
         if ( ref $service_info{args} eq 'HASH' && ref $base_config{args} eq 'HASH' ) {
@@ -583,6 +644,7 @@ dependencies are created first.
 
 sub find_refs {
     my ( $self, $for, @args ) = @_;
+
     my @out;
     my %meta = $self->get_meta_names;
     for my $arg ( @args ) {
@@ -592,13 +654,7 @@ sub find_refs {
                     push @out, $self->resolve_ref( $for, $arg );
                 }
                 else { # Try to treat it as a service to create
-                    my %service_info;
-                    my $prefix = $self->meta_prefix;
-                    for my $arg_key ( keys %{$arg} ) {
-                        my $info_key = $arg_key;
-                        $info_key =~ s/^\Q$prefix//;
-                        $service_info{ $info_key } = $arg->{ $arg_key };
-                    }
+                    my %service_info = %{ $self->normalize_config( $arg ) };
                     push @out, $self->create_service( '$anonymous', %service_info );
                 }
             }
@@ -613,7 +669,9 @@ sub find_refs {
             push @out, $arg; # simple scalars
         }
     }
-    return @out;
+
+    # In case we only pass in one argument and want one return value
+    return wantarray ? @out : $out[-1];
 }
 
 =method is_meta
@@ -624,17 +682,40 @@ Returns true if the given hash reference describes some kind of
 Beam::Wire service. This is used to identify service configuration
 hashes inside of larger data structures.
 
-A service hash reference must contain at least one key, and must not
-contain any keys that are not meta-keys (as returned by L<the
-get_meta_names method|/get_meta_names>).
+A service hash reference must contain at least one key, and must either
+be made completely of meta keys (as returned by L<the get_meta_names
+method|/get_meta_names>), or contain a L<prefixed|/meta_prefix> key that
+could create or reference an object (one of C<class>, C<extends>,
+C<config>, C<value>, or C<ref>);
 
 =cut
 
 sub is_meta {
     my ( $self, $arg ) = @_;
-    my $prefix = $self->meta_prefix;
-    my @keys = keys %{ $arg };
-    return @keys && !grep { !/^\Q$prefix/ } @keys;
+
+    # Only a hashref can be meta
+    return unless ref $arg eq 'HASH';
+
+    my @keys = keys %$arg;
+    return unless @keys;
+
+    my %meta = $self->get_meta_names;
+    my %meta_names = map { $_ => 1 } values %meta;
+
+    # A regular service does not need the prefix, but must consist
+    # only of meta keys
+    return 1 if scalar @keys eq grep { $meta{ $_ } } @keys;
+
+    # A meta service contains at least one of these keys, as these are
+    # the keys that can create a service. All other keys are
+    # modifiers
+    return 1
+        if grep { exists $arg->{ $_ } }
+            map { $meta{ $_ } }
+            qw( ref class extends config value );
+
+    # Must not be meta
+    return;
 }
 
 =method get_meta_names
@@ -650,14 +731,19 @@ sub get_meta_names {
     my ( $self ) = @_;
     my $prefix = $self->meta_prefix;
     my %meta = (
-        ref     => "${prefix}ref",
-        path    => "${prefix}path",
-        method  => "${prefix}method",
-        args    => "${prefix}args",
-        class   => "${prefix}class",
-        extends => "${prefix}extends",
-        sub     => "${prefix}sub",
-        call    => "${prefix}call",
+        ref         => "${prefix}ref",
+        path        => "${prefix}path",
+        method      => "${prefix}method",
+        args        => "${prefix}args",
+        class       => "${prefix}class",
+        extends     => "${prefix}extends",
+        sub         => "${prefix}sub",
+        call        => "${prefix}call",
+        lifecycle   => "${prefix}lifecycle",
+        on          => "${prefix}on",
+        with        => "${prefix}with",
+        value       => "${prefix}value",
+        config      => "${prefix}config",
     );
     return wantarray ? %meta : \%meta;
 }
@@ -831,10 +917,14 @@ sub BUILD {
     }
 
     # Create all the eager services
+    my %meta = $self->get_meta_names;
     for my $key ( keys %{ $self->config } ) {
         my $config = $self->config->{$key};
-        if ( $config->{lifecycle} && $config->{lifecycle} eq 'eager' ) {
-            $self->get($key);
+        if ( ref $config eq 'HASH' ) {
+            my $lifecycle = $config->{lifecycle} || $config->{ $meta{lifecycle} };
+            if ( $lifecycle && $lifecycle eq 'eager' ) {
+                $self->get($key);
+            }
         }
     }
     return;

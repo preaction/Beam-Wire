@@ -136,6 +136,32 @@ subtest 'hash args' => sub {
         cmp_deeply $wire->get_config( 'base_hash' ), $expect_base_hash,
             'extends does not modify original config';
     };
+
+};
+
+subtest 'extends (raw): hash' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            base_hash => {
+                '$class' => 'My::ArgsTest',
+                hello => 'Hello',
+                who => 'World',
+            },
+            hash => {
+                '$extends' => 'base_hash',
+                who => 'Everyone',
+            },
+        },
+    );
+
+    my $expect_base_hash = $wire->get_config( 'base_hash' );
+
+    my $svc;
+    lives_ok { $svc = $wire->get( 'hash' ) };
+    isa_ok $svc, 'My::ArgsTest';
+    cmp_deeply $svc->got_args_hash, { hello => 'Hello', who => 'Everyone' };
+    cmp_deeply $wire->get_config( 'base_hash' ), $expect_base_hash,
+        'extends does not modify original config';
 };
 
 subtest 'nested data structures' => sub {
