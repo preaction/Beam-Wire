@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.016
+version 1.017
 
 # STATUS
 
@@ -13,501 +13,98 @@ version 1.016
 # SYNOPSIS
 
     # wire.yml
-
-    dbh:
-        class: 'DBI'
-        method: connect
+    captain:
+        class: Person
         args:
-            - 'dbi:mysql:dbname'
-            - {
-                PrintError: 1
-              }
+            name: Malcolm Reynolds
+            rank: Captain
+    first_officer:
+        $class: Person
+        name: Zoë Alleyne Washburne
+        rank: Commander
 
-    # myscript.pl
-
+    # script.pl
     use Beam::Wire;
-
     my $wire = Beam::Wire->new( file => 'wire.yml' );
-    my $dbh  = $wire->get( 'dbh' );
-               $wire->set( 'dbh' => DBI->new( 'dbi:pgsql:dbname' ) );
+    my $captain = $wire->get( 'captain' );
+    print $captain->name; # "Malcolm Reynolds"
 
 # DESCRIPTION
 
-Beam::Wire is a dependency injection (DI) container. A DI (dependency injection)
-container is a framework/mechanism where dependency creation and instantiation is
-handled automatically (e.g. creates instances of classes that implement a given
-dependency interface on request). DI does not require a container, in-fact, DI
-without a container is possible and simply infers that dependency creation isn't
-automatically handled for you (i.e. you have to write code to instantiate the
-dependencies manually).
-
-Dependency injection (DI) at it's core is about creating loosely coupled code by
-separating construction logic from application logic. This is done by pushing
-the creation of services (dependencies) to the entry point(s) and writing the
-application logic so that dependencies are provided for its components. The
-application logic doesn't know or care how it is supplied with its dependencies;
-it just requires them and therefore receives them.
-
-# OVERVIEW
-
-Beam::Wire loads a configuration [file](https://metacpan.org/pod/file) and stores the specified configuration
-in the [config](https://metacpan.org/pod/config&#x20;attribute) which is used to resolve it's services. This section
-will give you an overview of how to declare dependencies and services, and shape
-your configuration file.
-
-## WHAT IS A DEPENDENCY?
-
-A dependency is a declaration of a component requirement. In layman's terms, a
-dependency is a class attribute (or any value required for class construction)
-which will likely be used to define services.
-
-## WHAT IS A SERVICE?
-
-A service is a resolvable interface which may be selected and implemented on
-behalf of a dependent component, or instantiated and returned per request. In
-layman's terms, a service is a class configuration which can be used
-independently or as a dependent of other services.
-
-## HOW ARE SERVICES CONFIGURED?
-
-    # databases.yml
-
-    production_db:
-        class: 'DBI'
-        method: connect
-        args:
-            - 'dbi:mysql:master'
-            - { PrintError: 0, RaiseError: 0 }
-    production_cache:
-        class: 'CHI'
-        args:
-            driver: 'DBI'
-            dbh: { $ref: 'production_db' }
-    development_db:
-        class: 'DBI'
-        method: connect
-        args:
-            - 'dbi:mysql:slave'
-            - { PrintError: 1, RaiseError: 1 }
-    development_cache:
-        class: 'CHI'
-        args:
-            driver: 'DBI'
-            dbh: { $ref: 'development_db' }
-
-### Service Attributes
-
-#### class
-
-The class to instantiate. The class will be loaded and the `method` (below)
-method called.
-
-#### method
-
-The class method to call to construct the object. Defaults to `new`.
-
-If multiple methods are needed to initialize an object, `method` can be an
-arrayref of hashrefs, like so:
-
-    my_service:
-        class: My::Service
-        method:
-            - method: new
-              args:
-                foo: bar
-            - method: set_baz
-              args:
-                - Fizz
-
-In this example, first we call `My::Service-`new( foo => "bar" );> to get our
-object, then we call `$obj-`set\_baz( "Fizz" );> as a further initialization
-step.
-
-To chain methods together, add `return: chain`:
-
-    my_service:
-        class: My::Service
-        method:
-            - method: new
-              args:
-                foo: bar
-            - method: set_baz
-              return: chain
-              args:
-                - Fizz
-            - method: set_buzz
-              return: chain
-              args:
-                - Bork
-
-This example is equivalent to the following code:
-
-    my $service = My::Service->new( foo => "bar" )->set_baz( "Fizz" )
-                ->set_buzz( "Bork" );
-
-#### args
-
-The arguments to the `method` method. This can be either an array or a hash,
-like so:
-
-    # array
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - 'dbi:mysql:dbname'
-
-    # hash
-    cache:
-        class: CHI
-        args:
-            driver: Memory
-            max_size: 16MB
-
-Using the array of arguments, you can give arrayrefs or hashrefs:
-
-    # arrayref of arrayrefs
-    names:
-        class: 'Set::CrossProduct'
-        args:
-            -
-                - [ 'Foo', 'Barkowictz' ]
-                - [ 'Bar', 'Foosmith' ]
-                - [ 'Baz', 'Bazleton' ]
-
-    # arrayrefs of hashrefs
-    cache:
-        class: CHI
-        args:
-            -   driver: Memory
-                max_size: 16MB
-
-#### extends
-
-Inherit and override attributes from another service. 
-
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - 'dbi:mysql:dbname'
-    dbh_dev:
-        extends: 'dbh'
-        args:
-            - 'dbi:mysql:devdb'
-
-Hash `args` will be merged seperately, like so:
-
-    activemq:
-        class: My::ActiveMQ
-        args:
-            host: example.com
-            port: 61312
-            user: root
-            password: 12345
-    activemq_dev:
-        extends: 'activemq'
-        args:
-            host: dev.example.com
-
-`activemq_dev` will get the `port`, `user`, and `password` arguments
-from the base service `activemq`.
-
-#### with
-
-Compose roles into the service object.
-
-    app:
-        class: My::App
-        with: My::FeatureRole
-
-    otherapp:
-        class: My::App
-        with:
-            - My::FeatureRole
-            - My::OtherFeatureRole
-
-This lets you break features out into roles, and compose those roles a la carte
-on the fly. If you have 20 different optional features, it is difficult to create
-every possible combination of them. So, `with` allows you to pick the features
-you want.
-
-#### lifecycle
-
-Control how your service is created. The default value, `singleton`, will cache
-the resulting service and return it for every call to `get()`. The other
-value, `factory`, will create a new instance of the service every time:
-
-    today:
-        class: DateTime
-        method: today
-        lifecycle: factory
-        args:
-            time_zone: US/Chicago
-    report_yesterday:
-        class: My::Report
-        args:
-            date: { $ref: today, $method: add, $args: [ "days", "-1" ] }
-    report_today:
-        class: My::Report
-        args:
-            date: { $ref: today }
-
-`DateTime-`add> modifies the object and returns the newly-modified object (to
-allow for method chaining.) Without `lifecycle: factory`, the `today` service
-would become yesterday, making it hard to know what `report_today` would
-report on.
-
-An `eager` value will be created as soon as the container is created. If you
-have an object that registers itself upon instantiation, you can make sure your
-object is created as soon as possible by doing `lifecycle: eager`.
-
-#### on
-
-Attach event listeners using [Beam::Emitter](https://metacpan.org/pod/Beam::Emitter).
-
-    emitter:
-        class: My::Emitter
-        on:
-            before_my_event:
-                $ref: listener
-                $sub: on_before_my_event
-            my_event:
-                - $ref: listener
-                  $sub: on_my_event
-                - $ref: other_listener
-                  $sub: on_my_event
-    listener:
-        class: My::Listener
-    other_listener:
-        class: My::Listener
-
-Now, when the `emitter` fires off its events, they are dispatched to the
-appropriate listeners.
-
-In order to work around a bug in YAML.pm, you can also specify event listeners
-as an array of hashes:
-
-    emitter:
-        class: My::Emitter
-        on:
-            - before_my_event:
-                $ref: listener
-                $sub: on_before_my_event
-            - my_event:
-                $ref: listener
-                $sub: on_my_event
-            - my_event:
-                $ref: other_listener
-                $sub: on_my_event
-
-### Config Services
-
-A config service allows you to read a config file and use it as a service, giving
-all or part of it to other objects in your container.
-
-To create a config service, use the `config` key. The value is the path to the
-file to read. By default, YAML, JSON, XML, and Perl files are supported (via
-[Config::Any](https://metacpan.org/pod/Config::Any)).
-
-    # db_config.yml
-    dsn: 'dbi:mysql:dbname'
-    user: 'mysql'
-    pass: '12345'
-
-    # container.yml
-    db_config:
-        config: db_config.yml
-
-You can pass in the entire config to an object using `$ref`:
-
-    # container.yml
-    db_config:
-        config: db_config.yml
-    dbobj:
-        class: My::DB
-        args:
-            conf:
-                $ref: db_config
-
-If you only need the config file once, you can create an anonymous config
-object.
-
-    # container.yml
-    dbobj:
-        class: My::DB
-        args:
-            conf:
-                $config: db_config.yml
-
-The config file can be used as all the arguments to the service:
-
-    # container.yml
-    dbobj:
-        class: My::DB
-        args:
-            $config: db_config.yml
-
-In this example, the constructor will be called like:
-
-    my $dbobj = My::DB->new(
-        dsn => 'dbi:mysql:dbname',
-        user => 'mysql',
-        pass => '12345',
-    );
-
-You can reference individual items in a configuration hash using `$path`
-references:
-
-    # container.yml
-    db_config:
-        config: db_config.yml
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - $ref: db_config
-              $path: /dsn
-            - $ref: db_config
-              $path: /user
-            - $ref: db_config
-              $path: /pass
-
-**NOTE:** You cannot use `$path` and anonymous config objects.
-
-### Inner Containers
-
-Beam::Wire objects can hold other Beam::Wire objects!
-
-    inner:
-        class: Beam::Wire
-        args:
-            config:
-                dbh:
-                    class: DBI
-                    method: connect
-                    args:
-                        - 'dbi:mysql:dbname'
-                cache:
-                    class: CHI
-                    args:
-                        driver: Memory
-                        max_size: 16MB
-
-Inner containers' contents can be reached from outer containers by separating
-the names with a slash character:
-
-    my $dbh = $wire->get( 'inner/dbh' );
-
-### Inner Files
-
-    inner:
-        class: Beam::Wire
-        args:
-            file: inner.yml
-
-Inner containers can be created by reading files just like the main container.
-If the `file` attribute is relative, the parent's `dir` attribute will be
-added:
-
-    # share/parent.yml
-    inner:
-        class: Beam::Wire
-        args:
-            file: inner.yml
-
-    # share/inner.yml
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - 'dbi:sqlite:data.db'
-
-    # myscript.pl
-    use Beam::Wire;
-
-    my $container = Beam::Wire->new(
-        file => 'share/parent.yml',
-    );
-
-    my $dbh = $container->get( 'inner/dbh' );
-
-If more control is needed, you can set the [dir](https://metacpan.org/pod/dir&#x20;attribute) on the parent
-container. If even more control is needed, you can make a subclass of Beam::Wire.
-
-### Service/Configuration References
-
-    chi:
-        class: CHI
-        args:
-            driver: 'DBI'
-            dbh: { $ref: 'dbh' }
-    dbh:
-        class: DBI
-        method: connect
-        args:
-            - { $ref: dsn }
-            - { $ref: usr }
-            - { $ref: pwd }
-    dsn:
-        value: "dbi:SQLite:memory:"
-    usr:
-        value: "admin"
-    pwd:
-        value: "s3cret"
-
-The reuse of service and configuration containers as arguments for other
-services is encouraged so we have provided a means of referencing those objects
-within your configuration. A reference is an arugment (a service argument) in
-the form of a hashref with a `$ref` key whose value is the name of another
-service. Optionally, this hashref may contain a `$path` key whose value is a
-[Data::DPath](https://metacpan.org/pod/Data::DPath) search string which should return the found data
-structure from within the referenced service.
-
-It is also possible to use raw-values as services, this is done by configuring a
-service using a single key/value pair with a `value` key whose value contains
-the raw-value you wish to reuse.
+Beam::Wire is a configuration module and a dependency injection
+container. In addition to complex data structures, Beam::Wire configures
+and creates plain old Perl objects.
+
+A dependency injection (DI) container creates an inversion of control:
+Instead of manually creating all the dependent objects (also called
+"services") before creating the main object that we actually want, a DI
+container handles that for us: We describe the relationships between
+objects, and the objects get built as needed.
+
+Dependency injection is sometimes called the opposite of garbage
+collection. Rather than ensure objects are destroyed in the right order,
+dependency injection makes sure objects are created in the right order.
+
+Using Beam::Wire in your application brings great flexibility,
+allowing users to easily add their own code to customize how your
+project behaves.
+
+For an [introduction to the Beam::Wire service configuration format,
+see Beam::Wire::Help::Config](https://metacpan.org/pod/Beam::Wire::Help::Config).
 
 # ATTRIBUTES
 
 ## file
 
-The file attribute contains the file path of the file where Beam::Wire container
-services are configured (typically a YAML file). The file's contents should form
-a single hashref. The keys will become the service names.
+The path of the file where services are configured (typically a YAML
+file). The file's contents should be a single hashref. The keys are
+service names, and the values are [service
+configurations](https://metacpan.org/pod/Beam::Wire::Help::Config).
 
 ## dir
 
-The dir attribute contains the directory path to use when searching for inner
-container files. Defaults to the directory which contains the file specified by
-the [file](https://metacpan.org/pod/file&#x20;attribute).
+The directory path to use when searching for inner container files.
+Defaults to the directory which contains the file specified by the
+[file attribute](#file).
 
 ## config
 
-The config attribute contains a hashref of service configurations. This data is
-loaded by [Config::Any](https://metacpan.org/pod/Config::Any) using the file specified by the
-[file](https://metacpan.org/pod/file&#x20;attribute).
+The raw configuration data. By default, this data is loaded by
+[Config::Any](https://metacpan.org/pod/Config::Any) using the file specified by the [/file](https://metacpan.org/pod/file
+attribute).
+
+See [Beam::Wire::Help::Config for details on what the configuration
+data structure looks like](https://metacpan.org/pod/Beam::Wire::Help::Config).
+
+If you don't want to load a file, you can specify this attribute in the
+Beam::Wire constructor.
 
 ## services
 
-A hashref of services. If you have any services already built, add them here.
+A hashref of cached services built from the [configuration](#config). If
+you want to inject a pre-built object for other services to depend on,
+add it here.
 
 ## meta\_prefix
 
 The character that begins a meta-property inside of a service's `args`. This
 includes `$ref`, `$path`, `$method`, and etc...
 
-The default value is '$'. The empty string is allowed.
+The default value is `$`. The empty string is allowed.
 
 # METHODS
 
-## get( name, \[ overrides \] )
+## get
 
-The get method resolves and returns the service named `name`.
+    my $service = $wire->get( $name );
+    my $service = $wire->get( $name, %overrides )
 
-`overrides` may be a list of name-value pairs. If specified, get()
-will create an anonymous service that extends the `name` service
-with the given config overrides:
+The get method resolves and returns the service named `$name`, creating
+it, if necessary, with [the create\_service method](#create_service).
+
+`%overrides` is an optional list of name-value pairs. If specified,
+get() will create an new, anonymous service that extends the named
+service with the given config overrides. For example:
 
     # test.pl
     use Beam::Wire;
@@ -520,21 +117,293 @@ with the given config overrides:
             },
         },
     );
+
     my $foo = $wire->get( 'foo', args => { text => 'Hello, Chicago!' } );
     print $foo; # prints "Hello, Chicago!"
 
 This allows you to create factories out of any service, overriding service
 configuration at run-time.
 
+If `$name` contains a slash (`/`) character (e.g. `foo/bar`), the left
+side (`foo`) will be used as the name of an inner container, and the
+right side (`bar`) is a service inside that container. For example,
+these two lines are equivalent:
+
+    $bar = $wire->get( 'foo/bar' );
+    $bar = $wire->get( 'foo' )->get( 'bar' );
+
+Inner containers can be nested as deeply as desired (`foo/bar/baz/fuzz`).
+
 ## set
 
-The set method configures and stores the specified service.
+    $wire->set( $name => $service );
+
+The set method configures and stores the specified `$service` with the
+specified `$name`. Use this to add or replace built services.
+
+Like [the get() method, above](#get), `$name` can contain a slash (`/`)
+character to traverse through nested containers.
 
 ## get\_config
 
-Get the config with the given name, searching inner containers if required
+    my $conf = $wire->get_config( $name );
+
+Get the config with the given `$name`. Like [the get() method,
+above](#get), `$name` can contain slash (`/`) characters to traverse
+through nested containers.
+
+## normalize\_config
+
+    my $out_conf = $self->normalize_config( $in_conf );
+
+Normalize the given `$in_conf` into to hash that [the create\_service
+method](#create_service) expects. This method allows a service to be
+defined with prefixed meta-names (`$class` instead of `class`) and
+the arguments specified without prefixes.
+
+For example, these two services are identical.
+
+    foo:
+        class: Foo
+        args:
+            fizz: buzz
+
+    foo:
+        $class: Foo
+        fizz: buzz
+
+The `$in_conf` must be a hash, and must already pass [an is\_meta
+check](#is_meta).
+
+## create\_service
+
+    my $service = $wire->create_service( $name, %config );
+
+Create the service with the given `$name` and `%config`. Config can
+contain the following keys:
+
+- class
+
+    The class name of an object to create. Can be combined with `method`,
+    and `args`.
+
+- args
+
+    The arguments to the constructor method. Used with `class` and
+    `method`. Can be a simple value, or a reference to an array or
+    hash which will be dereferenced and passed in to the constructor
+    as a list.
+
+- method
+
+    The method to call to create the object. Only used with `class`.
+    Defaults to `"new"`.
+
+    This can also be an array of hashes which describe a list of methods
+    that will be called on the object. The first method should create the
+    object, and each subsequent method can be used to modify the object. The
+    hashes should contain a `method` key, which is a string containing the
+    method to call, and optionally `args` and `return` keys. The `args`
+    key works like the top-level `args` key, above. The optional `return`
+    key can have the special value `"chain"`, which will use the return
+    value from the method as the value for the service ([The tutorial shows
+    examples of this](https://metacpan.org/pod/Beam::Wire::Help::Config#Multiple-Constructor-Methods)).
+
+    If an array is used, the top-level `args` key is not used.
+
+- value
+
+    The value of this service. Can be a simple value, or a reference to an
+    array or hash. This value will be simply returned by this method, and is
+    mostly useful when using container files.
+
+    `value` can not be used with `class` or `extends`.
+
+- config
+
+    The path to a configuration file, relative to [the dir attribute](#dir).
+    The file will be read with [Config::Any](https://metacpan.org/pod/Config::Any), and the resulting data
+    structure returned.
+
+- extends
+
+    The name of a service to extend. The named service's configuration will
+    be merged with this configuration (via [the merge\_config
+    method](#merge_config)).
+
+    This can be used in place of the `class` key if the extended configuration
+    contains a class.
+
+- with
+
+    Compose a role into the object's class before creating the object. This
+    can be a single string, or an array reference of strings which are roles
+    to combine.
+
+    This uses [Moo::Role](https://metacpan.org/pod/Moo::Role) and [the create\_class\_with\_roles
+    method](https://metacpan.org/pod/Role::Tiny#create_class_with_roles), which should work with any
+    class (as it uses [the Role::Tiny module](https://metacpan.org/pod/Role::Tiny) under the hood).
+
+    This can be used with the `class` key.
+
+- on
+
+    Attach an event handler to a [Beam::Emitter subclass](https://metacpan.org/pod/Beam::Emitter). This
+    is an array of hashes of event names and handlers. A handler is made from
+    a service reference (`$ref` or an anonymous service), and a subroutine to
+    call on that service (`$sub`).
+
+    For example:
+
+        emitter:
+            class: My::Emitter
+            on:
+                - my_event:
+                    $ref: my_handler
+                    $sub: on_my_event
+
+    This can be used with the `class` key.
+
+This method uses [the parse\_args method](#parse_args) to parse the `args` key,
+[resolving references](https://metacpan.org/pod/resolve_ref) as needed.
+
+## merge\_config
+
+    my %merged = $wire->merge_config( %config );
+
+If `%config` contains an `extends` key, merge the extended config together
+with this one, returning the merged service configuration. This works recursively,
+so a service can extend a service that extends another service just fine.
+
+When merging, hashes are combined, with the child configuration taking
+precedence. The `args` key is handled specially to allow a hash of
+args to be merged.
+
+The configuration returned is a safe copy and can be modified without
+effecting the original config.
+
+## parse\_args
+
+    my @args = $wire->parse_args( $for_name, $class, $args );
+
+Parse the arguments (`$args`) for the given service (`$for_name`) with
+the given class (`$class`).
+
+`$args` can be an array reference, a hash reference, or a simple
+scalar. The arguments will be searched for references using [the
+find\_refs method](#find_refs), and then a list of arguments will be
+returned, ready to pass to the object's constructor.
+
+Nested containers are handled specially by this method: Their inner
+references are not resolved by the parent container. This ensures that
+references are always relative to the container they're in.
+
+## find\_refs
+
+    my @resolved = $wire->find_refs( $for_name, @args );
+
+Go through the `@args` and recursively resolve any references and
+services found inside, returning the resolved result. References are
+identified with [the is\_meta method](#is_meta).
+
+If a reference contains a `$ref` key, it will be resolved by [the
+resolve\_ref method](#resolve_ref). Otherwise, the reference will be
+treated as an anonymous service, and passed directly to [the
+create\_service method](#create_service).
+
+This is used when [creating a service](https://metacpan.org/pod/create_service) to ensure all
+dependencies are created first.
+
+## is\_meta
+
+    my $is_meta = $wire->is_meta( $ref_hash );
+
+Returns true if the given hash reference describes some kind of
+Beam::Wire service. This is used to identify service configuration
+hashes inside of larger data structures.
+
+A service hash reference must contain at least one key, and must either
+be made completely of meta keys (as returned by [the get\_meta\_names
+method](#get_meta_names)), or contain a [prefixed](#meta_prefix) key that
+could create or reference an object (one of `class`, `extends`,
+`config`, `value`, or `ref`);
+
+## get\_meta\_names
+
+    my %meta_keys = $wire->get_meta_names;
+
+Get all the possible service keys with the [meta prefix](#meta_prefix) already
+attached.
+
+## resolve\_ref
+
+    my @value = $wire->resolve_ref( $for_name, $ref_hash );
+
+Resolves the given dependency from the configuration hash (`$ref_hash`)
+for the named service (`$for_name`). Reference hashes contain the
+following keys:
+
+- $ref
+
+    The name of a service in the container. Required.
+
+- $path
+
+    A data path to pick some data out of the reference. Useful with `value`
+    and `config` services.
+
+        # container.yml
+        bounties:
+            value:
+                malcolm: 50000
+                zoe: 35000
+                simon: 100000
+
+        captain:
+            class: Person
+            args:
+                name: Malcolm Reynolds
+                bounty:
+                    $ref: bounties
+                    $path: /malcolm
+
+- $call
+
+    Call a method on the referenced object and use the resulting value. This
+    may be a string, which will be the method name to call, or a hash with
+    `$method` and `$args`, which are the method name to call and the
+    arguments to that method, respectively.
+
+        captain:
+            class: Person
+            args:
+                name: Malcolm Reynolds
+                location:
+                    $ref: beacon
+                    $call: get_location
+                bounty:
+                    $ref: news
+                    $call:
+                        $method: get_bounty
+                        $args:
+                            name: mreynolds
+
+## fix\_refs
+
+    my @fixed = $wire->fix_refs( $for_name, @args );
+
+Similar to [the find\_refs method](#find_refs). This method searches
+through the `@args` and recursively fixes any reference paths to be
+absolute. References are identified with [the is\_meta
+method](#is_meta).
+
+This is used by [the get\_config method](#get_config) to ensure that the
+configuration can be passed directly in to [the create\_service
+method](https://metacpan.org/pod/create_service).
 
 ## new
+
+    my $wire = Beam::Wire->new( %attributes );
 
 Create a new container.
 
@@ -587,3 +456,15 @@ This software is copyright (c) 2015 by Doug Bell.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
+
+# POD ERRORS
+
+Hey! **The above document had some coding errors, which are explained below:**
+
+- Around line 21:
+
+    Non-ASCII character seen before =encoding in 'Zoë'. Assuming CP1252
+
+- Around line 70:
+
+    alternative text '/file' contains non-escaped | or /
