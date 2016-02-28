@@ -57,6 +57,8 @@ use Data::DPath qw ( dpath );
 use Path::Tiny qw( path );
 use File::Basename qw( dirname );
 use Types::Standard qw( :all );
+use Data::Dumper;
+use constant DEBUG => $ENV{BEAM_WIRE_DEBUG};
 
 =attr file
 
@@ -206,6 +208,9 @@ Inner containers can be nested as deeply as desired (C<foo/bar/baz/fuzz>).
 
 sub get {
     my ( $self, $name, %override ) = @_;
+
+    ; print STDERR "Get service: $name\n" if DEBUG;
+
     if ( $name =~ q{/} ) {
         my ( $container_name, $service ) = split m{/}, $name, 2;
         return $self->get( $container_name )->get( $service, %override );
@@ -217,6 +222,8 @@ sub get {
 
     my $service = $self->services->{$name};
     if ( !$service ) {
+        ; printf STDERR 'Service "%s" does not exist. Creating.' . "\n", $name if DEBUG;
+
         my $config_ref = $self->get_config($name);
         unless ( $config_ref ) {
             Beam::Wire::Exception::NotFound->throw(
@@ -224,6 +231,8 @@ sub get {
                 file => $self->file,
             );
         }
+
+        ; print STDERR "Got service config: " . Dumper $config_ref if DEBUG;
 
         if ( ref $config_ref eq 'HASH' && $self->is_meta( $config_ref ) ) {
             my %config  = %{ $self->normalize_config( $config_ref ) };
@@ -236,6 +245,8 @@ sub get {
             $self->services->{$name} = $service = $self->find_refs( $name, $config_ref );
         }
     }
+
+    ; print STDERR "Returning service: " . Dumper $service if DEBUG;
 
     return $service;
 }
@@ -314,6 +325,8 @@ check|/is_meta>.
 sub normalize_config {
     my ( $self, $conf ) = @_;
 
+    ; print STDERR "In conf: " . Dumper $conf if DEBUG;
+
     my %meta = reverse $self->get_meta_names;
 
     # Confs without prefixed keys can be used as-is
@@ -328,6 +341,8 @@ sub normalize_config {
             $out_conf{ args }{ $key } = $conf->{ $key };
         }
     }
+
+    ; print STDERR "Out conf: " . Dumper \%out_conf if DEBUG;
 
     return \%out_conf;
 }
@@ -433,6 +448,8 @@ L<resolving references|resolve_ref> as needed.
 
 sub create_service {
     my ( $self, $name, %service_info ) = @_;
+
+    ; print STDERR "Creating service: " . Dumper \%service_info if DEBUG;
 
     # Compose the parent ref into the copy, in case the parent changes
     %service_info = $self->merge_config( %service_info );
@@ -645,6 +662,8 @@ dependencies are created first.
 sub find_refs {
     my ( $self, $for, @args ) = @_;
 
+    ; printf STDERR qq{Searching for refs for "%s": %s}, $for, Dumper \@args if DEBUG;
+
     my @out;
     my %meta = $self->get_meta_names;
     for my $arg ( @args ) {
@@ -654,6 +673,8 @@ sub find_refs {
                     push @out, $self->resolve_ref( $for, $arg );
                 }
                 else { # Try to treat it as a service to create
+                    ; print STDERR "Creating anonymous service: " . Dumper $arg if DEBUG;
+
                     my %service_info = %{ $self->normalize_config( $arg ) };
                     push @out, $self->create_service( '$anonymous', %service_info );
                 }
@@ -1161,3 +1182,15 @@ use overload q{""} => sub {
 };
 
 1;
+__END__
+
+=head1 ENVIRONMENT VARIABLES
+
+=over 4
+
+=item BEAM_WIRE_DEBUG
+
+If set, print a bunch of internal debugging information to STDERR.
+
+=back
+
