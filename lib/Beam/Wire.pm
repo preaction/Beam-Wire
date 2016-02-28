@@ -234,7 +234,7 @@ sub get {
 
         ; print STDERR "Got service config: " . Dumper $config_ref if DEBUG;
 
-        if ( ref $config_ref eq 'HASH' && $self->is_meta( $config_ref ) ) {
+        if ( ref $config_ref eq 'HASH' && $self->is_meta( $config_ref, 1 ) ) {
             my %config  = %{ $self->normalize_config( $config_ref ) };
             $service = $self->create_service( $name, %config );
             if ( !$config{lifecycle} || lc $config{lifecycle} ne 'factory' ) {
@@ -697,22 +697,25 @@ sub find_refs {
 
 =method is_meta
 
-    my $is_meta = $wire->is_meta( $ref_hash );
+    my $is_meta = $wire->is_meta( $ref_hash, $root );
 
 Returns true if the given hash reference describes some kind of
 Beam::Wire service. This is used to identify service configuration
 hashes inside of larger data structures.
 
 A service hash reference must contain at least one key, and must either
-be made completely of meta keys (as returned by L<the get_meta_names
-method|/get_meta_names>), or contain a L<prefixed|/meta_prefix> key that
-could create or reference an object (one of C<class>, C<extends>,
-C<config>, C<value>, or C<ref>);
+contain a L<prefixed|/meta_prefix> key that could create or reference an
+object (one of C<class>, C<extends>, C<config>, C<value>, or C<ref>) or,
+if the C<$root> flag exists, be made completely of unprefixed meta keys
+(as returned by L<the get_meta_names method|/get_meta_names>).
+
+The C<$root> flag is used by L<the get method|/get> to allow unprefixed
+meta keys in the top-level hash values.
 
 =cut
 
 sub is_meta {
-    my ( $self, $arg ) = @_;
+    my ( $self, $arg, $root ) = @_;
 
     # Only a hashref can be meta
     return unless ref $arg eq 'HASH';
@@ -725,7 +728,7 @@ sub is_meta {
 
     # A regular service does not need the prefix, but must consist
     # only of meta keys
-    return 1 if scalar @keys eq grep { $meta{ $_ } } @keys;
+    return 1 if $root && scalar @keys eq grep { $meta{ $_ } } @keys;
 
     # A meta service contains at least one of these keys, as these are
     # the keys that can create a service. All other keys are
