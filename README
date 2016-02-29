@@ -305,17 +305,20 @@ dependencies are created first.
 
 =method is_meta
 
-    my $is_meta = $wire->is_meta( $ref_hash );
+    my $is_meta = $wire->is_meta( $ref_hash, $root );
 
 Returns true if the given hash reference describes some kind of
 Beam::Wire service. This is used to identify service configuration
 hashes inside of larger data structures.
 
 A service hash reference must contain at least one key, and must either
-be made completely of meta keys (as returned by L<the get_meta_names
-method|/get_meta_names>), or contain a L<prefixed|/meta_prefix> key that
-could create or reference an object (one of C<class>, C<extends>,
-C<config>, C<value>, or C<ref>);
+contain a L<prefixed|/meta_prefix> key that could create or reference an
+object (one of C<class>, C<extends>, C<config>, C<value>, or C<ref>) or,
+if the C<$root> flag exists, be made completely of unprefixed meta keys
+(as returned by L<the get_meta_names method|/get_meta_names>).
+
+The C<$root> flag is used by L<the get method|/get> to allow unprefixed
+meta keys in the top-level hash values.
 
 =method get_meta_names
 
@@ -435,6 +438,16 @@ The configuration is invalid:
 =item *
 
 Both "value" and "class" or "extends" are defined. These are mutually-exclusive.
+
+=back
+
+=head1 ENVIRONMENT VARIABLES
+
+=over 4
+
+=item BEAM_WIRE_DEBUG
+
+If set, print a bunch of internal debugging information to STDERR.
 
 =back
 

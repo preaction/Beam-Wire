@@ -1,6 +1,11 @@
 Changelog for Beam-Wire
 
-1.017 2016-02-28T05:43:50
+1.018 2016-02-29T01:30:05
+ - add better error when object config incomplete
+ - fix unprefixed metadata allowed outside the root
+ - add debugging info with BEAM_WIRE_DEBUG envvar
+
+1.017 2016-02-28T05:43:50Z
  - add bare services
  - rewrite and expand the documentation
 

@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.017
+version 1.018
 
 # STATUS
 
@@ -316,17 +316,20 @@ dependencies are created first.
 
 ## is\_meta
 
-    my $is_meta = $wire->is_meta( $ref_hash );
+    my $is_meta = $wire->is_meta( $ref_hash, $root );
 
 Returns true if the given hash reference describes some kind of
 Beam::Wire service. This is used to identify service configuration
 hashes inside of larger data structures.
 
 A service hash reference must contain at least one key, and must either
-be made completely of meta keys (as returned by [the get\_meta\_names
-method](#get_meta_names)), or contain a [prefixed](#meta_prefix) key that
-could create or reference an object (one of `class`, `extends`,
-`config`, `value`, or `ref`);
+contain a [prefixed](#meta_prefix) key that could create or reference an
+object (one of `class`, `extends`, `config`, `value`, or `ref`) or,
+if the `$root` flag exists, be made completely of unprefixed meta keys
+(as returned by [the get\_meta\_names method](#get_meta_names)).
+
+The `$root` flag is used by [the get method](#get) to allow unprefixed
+meta keys in the top-level hash values.
 
 ## get\_meta\_names
 
@@ -438,6 +441,12 @@ The requested service or configuration was not found.
 The configuration is invalid:
 
 - Both "value" and "class" or "extends" are defined. These are mutually-exclusive.
+
+# ENVIRONMENT VARIABLES
+
+- BEAM\_WIRE\_DEBUG
+
+    If set, print a bunch of internal debugging information to STDERR.
 
 # AUTHORS
 
