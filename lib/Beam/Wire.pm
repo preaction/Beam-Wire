@@ -478,6 +478,14 @@ sub create_service {
         return $self->_load_config( "$conf_path" );
     }
 
+    if ( !$service_info{class} ) {
+        Beam::Wire::Exception::InvalidConfig->throw(
+            name => $name,
+            file => $self->file,
+            error => 'Service configuration incomplete. Missing one of "class", "value", "config"',
+        );
+    }
+
     use_module( $service_info{class} );
 
     if ( my $with = $service_info{with} ) {
