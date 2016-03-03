@@ -470,10 +470,6 @@ the same terms as the Perl 5 programming language system itself.
 
 Hey! **The above document had some coding errors, which are explained below:**
 
-- Around line 21:
-
-    Non-ASCII character seen before =encoding in 'Zoë'. Assuming CP1252
-
-- Around line 70:
+- Around line 72:
 
     alternative text '/file' contains non-escaped | or /
