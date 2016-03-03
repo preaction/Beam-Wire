@@ -70,8 +70,7 @@ Defaults to the directory which contains the file specified by the
 ## config
 
 The raw configuration data. By default, this data is loaded by
-[Config::Any](https://metacpan.org/pod/Config::Any) using the file specified by the [/file](https://metacpan.org/pod/file
-attribute).
+[Config::Any](https://metacpan.org/pod/Config::Any) using the file specified by the [file attribute](#file).
 
 See [Beam::Wire::Help::Config for details on what the configuration
 data structure looks like](https://metacpan.org/pod/Beam::Wire::Help::Config).
@@ -465,11 +464,3 @@ This software is copyright (c) 2015 by Doug Bell.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
-
-# POD ERRORS
-
-Hey! **The above document had some coding errors, which are explained below:**
-
-- Around line 72:
-
-    alternative text '/file' contains non-escaped | or /
