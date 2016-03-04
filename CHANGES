@@ -1,6 +1,16 @@
 Changelog for Beam-Wire
 
-1.018 2016-02-29T01:30:05
+1.019 2016-03-04T04:20:22
+ - Stop shipping README.mkdn to CPAN
+ - Replace ReadmeMarkdownFromPod with ReadmeAnyFromPod
+ - Inject travis markdown stuff in source tree, not build tree.
+ - Replace ReadmeFromPod with Readme::Brief
+ - Stop copying "README" from "CPAN" to "Source"
+ - Filter out the Readme plugin from @Basic
+ - Correct apparently backwards POD Link
+ - Add -SingleEncoding to weaver config
+
+1.018 2016-02-29T01:30:05Z
  - add better error when object config incomplete
  - fix unprefixed metadata allowed outside the root
  - add debugging info with BEAM_WIRE_DEBUG envvar
