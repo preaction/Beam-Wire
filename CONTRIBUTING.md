@@ -73,7 +73,7 @@ cpanm .
 
 ### Using Dist::Zilla
 
-Once you have installed Dist::Zilla, you can get this distributions's
+Once you have installed Dist::Zilla, you can get this distribution's
 dependencies by doing:
 
 ```
