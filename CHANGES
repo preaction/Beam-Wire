@@ -2,6 +2,14 @@ Changelog for Beam-Wire
 
 {{ $NEXT }}
 
+    [Added]
+
+    - Objects that compose the Beam::Service role will now get their
+      name and the container they came from as attributes to their
+      constructor. This allows an object to look up services later if it
+      wants to (if, for some reason, those services can't be declared as
+      dependencies). [Github #56]
+
 1.019 2016-03-04T04:20:22
  - Stop shipping README.mkdn to CPAN
  - Replace ReadmeMarkdownFromPod with ReadmeAnyFromPod

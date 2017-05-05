@@ -358,7 +358,7 @@ contain the following keys:
 =item class
 
 The class name of an object to create. Can be combined with C<method>,
-and C<args>.
+and C<args>. An object of any class can be created with Beam::Wire.
 
 =item args
 
@@ -366,6 +366,9 @@ The arguments to the constructor method. Used with C<class> and
 C<method>. Can be a simple value, or a reference to an array or
 hash which will be dereferenced and passed in to the constructor
 as a list.
+
+If the C<class> consumes the L<Beam::Service role|Beam::Service>,
+the service's C<name> and C<container> will be added to the C<args>.
 
 =item method
 
@@ -509,6 +512,9 @@ sub create_service {
     }
     else {
         my @args = $self->parse_args( $name, @service_info{"class","args"} );
+        if ( $service_info{class}->can( 'DOES' ) && $service_info{class}->DOES( 'Beam::Service' ) ) {
+            push @args, name => $name, container => $self;
+        }
         $service = $service_info{class}->$method( @args );
     }
 
