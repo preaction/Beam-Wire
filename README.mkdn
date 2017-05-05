@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.019
+version 1.020
 
 # STATUS
 
@@ -184,7 +184,7 @@ contain the following keys:
 - class
 
     The class name of an object to create. Can be combined with `method`,
-    and `args`.
+    and `args`. An object of any class can be created with Beam::Wire.
 
 - args
 
@@ -192,6 +192,9 @@ contain the following keys:
     `method`. Can be a simple value, or a reference to an array or
     hash which will be dereferenced and passed in to the constructor
     as a list.
+
+    If the `class` consumes the [Beam::Service role](https://metacpan.org/pod/Beam::Service),
+    the service's `name` and `container` will be added to the `args`.
 
 - method
 
@@ -454,8 +457,11 @@ The configuration is invalid:
 
 # CONTRIBUTORS
 
+- Ben Moon <guiltydolphin@gmail.com>
 - Bruce Armstrong <bruce@armstronganchor.net>
 - Bruce Armstrong <bruce@fortressofgeekdom.org>
+- Doug Bell <doug@preaction.me>
+- Doug Bell <preaction@users.noreply.github.com>
 - Kent Fredric <kentnl@cpan.org>
 
 # COPYRIGHT AND LICENSE

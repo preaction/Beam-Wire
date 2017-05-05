@@ -1,4 +1,5 @@
 requires "Beam::Emitter" => "0";
+requires "Beam::Service" => "0";
 requires "Config::Any" => "0.23";
 requires "Data::DPath" => "0.51";
 requires "Module::Runtime" => "0";
