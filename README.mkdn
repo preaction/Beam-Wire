@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.020
+version 1.021
 
 # STATUS
 
@@ -459,14 +459,12 @@ The configuration is invalid:
 
 - Ben Moon <guiltydolphin@gmail.com>
 - Bruce Armstrong <bruce@armstronganchor.net>
-- Bruce Armstrong <bruce@fortressofgeekdom.org>
-- Doug Bell <doug@preaction.me>
-- Doug Bell <preaction@users.noreply.github.com>
 - Kent Fredric <kentnl@cpan.org>
+- mohawk2 <mohawk2@users.noreply.github.com>
 
 # COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2015 by Doug Bell.
+This software is copyright (c) 2018 by Doug Bell.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
