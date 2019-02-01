@@ -1048,7 +1048,7 @@ sub validate {
         }
 
         if ($config{class}) {
-            eval "require " . $config{class} if $config{class};
+            eval "require " . $config{class};
         }
         #TODO: check method chain & serial
     }
