@@ -1,5 +1,7 @@
 #!perl
 
+# PODNAME: beam-wire
+
 use strict;
 use warnings;
 

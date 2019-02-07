@@ -15,6 +15,9 @@ my %WriteMakefileArgs = (
     "Module::Metadata" => 0
   },
   "DISTNAME" => "Beam-Wire",
+  "EXE_FILES" => [
+    "bin/beam-wire"
+  ],
   "LICENSE" => "perl",
   "MIN_PERL_VERSION" => "5.008",
   "NAME" => "Beam::Wire",
