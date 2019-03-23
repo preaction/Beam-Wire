@@ -289,9 +289,10 @@ sub get_config {
     my ( $self, $name ) = @_;
     if ( $name =~ q{/} ) {
         my ( $container_name, $service ) = split m{/}, $name, 2;
-        my $inner_config = $self->get( $container_name )->get_config( $service );
+        my %inner_config = %{ $self->get( $container_name )->get_config( $service ) };
         # Fix relative references to prefix the container name
-        return { $self->fix_refs( $container_name, %{$inner_config} ) };
+        my ( $fixed_config ) = $self->fix_refs( $container_name, \%inner_config );
+        return $fixed_config;
     }
     return $self->config->{$name};
 }
@@ -891,7 +892,7 @@ sub resolve_ref {
 
 =method fix_refs
 
-    my @fixed = $wire->fix_refs( $for_name, @args );
+    my @fixed = $wire->fix_refs( $for_container_name, @args );
 
 Similar to L<the find_refs method|/find_refs>. This method searches
 through the C<@args> and recursively fixes any reference paths to be
@@ -910,13 +911,18 @@ sub fix_refs {
     my %meta = $self->get_meta_names;
     for my $arg ( @args ) {
         if ( ref $arg eq 'HASH' ) {
-            if ( $self->is_meta( $arg ) ) {
-                my %new = ();
-                for my $key ( @meta{qw( ref extends )} ) {
-                    if ( $arg->{$key} ) {
-                        $new{ $key } = join( q{/}, $container_name, $arg->{$key} );
+            if ( $self->is_meta( $arg, 1 ) ) {
+                #; print STDERR 'Fixing refs for arg: ' . Dumper $arg;
+                my %new = %$arg;
+                for my $key ( keys %new ) {
+                    if ( $key =~ /(?:ref|extends)$/ ) {
+                        $new{ $key } = join( q{/}, $container_name, $new{$key} );
+                    }
+                    else {
+                        ( $new{ $key } ) = $self->fix_refs( $container_name, $new{ $key } );
                     }
                 }
+                #; print STDERR 'Fixed refs for arg: ' . Dumper \%new;
                 push @out, \%new;
             }
             else {
