@@ -2,6 +2,8 @@ Changelog for Beam-Wire
 
 {{ $NEXT }}
 
+1.023     2019-03-23 16:19:26-05:00 America/Chicago
+
     [Added]
 
     - Added `configure_service` and `build_service` events. These allow
