@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.022
+version 1.023
 
 # STATUS
 
@@ -395,7 +395,7 @@ following keys:
 
 ## fix\_refs
 
-    my @fixed = $wire->fix_refs( $for_name, @args );
+    my @fixed = $wire->fix_refs( $for_container_name, @args );
 
 Similar to [the find\_refs method](#find_refs). This method searches
 through the `@args` and recursively fixes any reference paths to be
@@ -444,6 +444,32 @@ The configuration is invalid:
 
 - Both "value" and "class" or "extends" are defined. These are mutually-exclusive.
 
+# EVENTS
+
+The container emits the following events.
+
+## configure\_service
+
+This event is emitted when a new service is configured, but before it is
+instantiated or any classes loaded. This allows altering of the
+configuration before the service is built. Already-built services will
+not fire this event.
+
+Event handlers get a [Beam::Wire::Event::ConfigService](https://metacpan.org/pod/Beam::Wire::Event::ConfigService) object as their
+only argument.
+
+This event will bubble up from child containers.
+
+## build\_service
+
+This event is emitted when a new service is built. Cached services will
+not fire this event.
+
+Event handlers get a [Beam::Wire::Event::BuildService](https://metacpan.org/pod/Beam::Wire::Event::BuildService) object as their
+only argument.
+
+This event will bubble up from child containers.
+
 # ENVIRONMENT VARIABLES
 
 - BEAM\_WIRE\_DEBUG
@@ -459,6 +485,7 @@ The configuration is invalid:
 
 - Ben Moon <guiltydolphin@gmail.com>
 - Bruce Armstrong <bruce@armstronganchor.net>
+- Diab Jerius <djerius@cfa.harvard.edu>
 - Kent Fredric <kentnl@cpan.org>
 - Mohammad S Anwar <mohammad.anwar@yahoo.com>
 - mohawk2 <mohawk2@users.noreply.github.com>
