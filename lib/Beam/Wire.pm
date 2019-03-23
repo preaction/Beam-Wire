@@ -58,7 +58,10 @@ use Path::Tiny qw( path );
 use File::Basename qw( dirname );
 use Types::Standard qw( :all );
 use Data::Dumper;
+use Beam::Wire::Event::ConfigService;
+use Beam::Wire::Event::BuildService;
 use constant DEBUG => $ENV{BEAM_WIRE_DEBUG};
+with 'Beam::Emitter';
 
 =attr file
 
@@ -211,12 +214,36 @@ sub get {
     ; print STDERR "Get service: $name\n" if DEBUG;
 
     if ( $name =~ q{/} ) {
-        my ( $container_name, $service ) = split m{/}, $name, 2;
-        return $self->get( $container_name )->get( $service, %override );
+        my ( $container_name, $service_name ) = split m{/}, $name, 2;
+        my $container = $self->get( $container_name );
+        my $unsub_config = $container->on( configure_service => sub {
+            my ( $event ) = @_;
+            $self->emit( configure_service =>
+                class => 'Beam::Wire::Event::ConfigService',
+                service_name => join( '/', $container_name, $event->service_name ),
+                config => $event->config,
+            );
+        } );
+        my $unsub_build = $container->on( build_service => sub {
+            my ( $event ) = @_;
+            $self->emit( build_service =>
+                class => 'Beam::Wire::Event::BuildService',
+                service_name => join( '/', $container_name, $event->service_name ),
+                service => $event->service,
+            );
+        } );
+        my $service = $container->get( $service_name, %override );
+        $unsub_config->();
+        $unsub_build->();
+        return $service;
     }
 
     if ( keys %override ) {
-        return $self->create_service( "\$anonymous extends $name", %override, extends => $name );
+        return $self->create_service(
+            "\$anonymous extends $name",
+            %override,
+            extends => $name,
+        );
     }
 
     my $service = $self->services->{$name};
@@ -489,6 +516,12 @@ sub create_service {
         );
     }
 
+    $self->emit( configure_service =>
+        class => 'Beam::Wire::Event::ConfigService',
+        service_name => $name,
+        config => \%service_info,
+    );
+
     use_module( $service_info{class} );
 
     if ( my $with = $service_info{with} ) {
@@ -549,6 +582,12 @@ sub create_service {
             $service->on( $event => sub { $listen_svc->$sub_name( @_ ) } );
         }
     }
+
+    $self->emit( build_service =>
+        class => 'Beam::Wire::Event::BuildService',
+        service_name => $name,
+        service => $service,
+    );
 
     return $service;
 }
@@ -1202,6 +1241,34 @@ use overload q{""} => sub {
         ( $file ? " in file '$file'" : "" ),
         ;
 };
+
+=head1 EVENTS
+
+The container emits the following events.
+
+=head2 configure_service
+
+This event is emitted when a new service is configured, but before it is
+instantiated or any classes loaded. This allows altering of the
+configuration before the service is built. Already-built services will
+not fire this event.
+
+Event handlers get a L<Beam::Wire::Event::ConfigService> object as their
+only argument.
+
+This event will bubble up from child containers.
+
+=head2 build_service
+
+This event is emitted when a new service is built. Cached services will
+not fire this event.
+
+Event handlers get a L<Beam::Wire::Event::BuildService> object as their
+only argument.
+
+This event will bubble up from child containers.
+
+=cut
 
 1;
 __END__

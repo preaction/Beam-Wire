@@ -2,6 +2,11 @@ Changelog for Beam-Wire
 
 {{ $NEXT }}
 
+    [Added]
+
+    - Added `configure_service` and `build_service` events. These allow
+      notification and control of service objects' lifecycle.
+
     [Fixed]
 
     - Fixed child containers not being able to reference local services.
