@@ -1,16 +1,15 @@
 language: perl
 perl:
-    - "5.8.9" # 3-part version to ensure core-only Perl
     - "5.10.1" # 3-part version to ensure core-only Perl
-    - "5.26"
-    - "5.26.0"
+    - "5.28"
+    - "5.28.0"
     - "blead"
 
 matrix:
     include:
-        - perl: '5.26'
+        - perl: '5.28'
           env: COVERAGE=1
-        - perl: "5.26"
+        - perl: "5.28"
           env: DEVEL_HIDE_PM="YAML::XS"
     allow_failures:
         - perl: "blead"
