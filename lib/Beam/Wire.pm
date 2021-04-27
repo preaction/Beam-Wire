@@ -538,9 +538,9 @@ sub create_service {
             my $return = $m->{return} || q{};
             delete $service_info{args};
             my @args = $self->parse_args( $name, $service_info{class}, $m->{args} );
-            my $invocant = $service || $service_info{class};
+            my $invocant = defined $service ? $service : $service_info{class};
             my $output = $invocant->$method_name( @args );
-            $service = !$service || $return eq 'chain' ? $output
+            $service = !defined $service || $return eq 'chain' ? $output
                      : $service;
         }
     }
