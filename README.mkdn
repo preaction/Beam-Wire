@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.023
+version 1.024
 
 # STATUS
 
@@ -492,7 +492,7 @@ This event will bubble up from child containers.
 
 # COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2018 by Doug Bell.
+This software is copyright (c) 2018-2021 by Doug Bell.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
