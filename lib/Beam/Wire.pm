@@ -496,7 +496,7 @@ sub create_service {
             error => '"value" cannot be used with "class" or "extends"',
         );
     }
-    if ( $service_info{value} ) {
+    if ( exists $service_info{value} ) {
         return $service_info{value};
     }
 
