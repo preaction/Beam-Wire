@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.024
+version 1.025
 
 # STATUS
 
@@ -483,6 +483,7 @@ This event will bubble up from child containers.
 
 # CONTRIBUTORS
 
+- Al Tom <al-tom.ru@yandex.ru>
 - Ben Moon <guiltydolphin@gmail.com>
 - Bruce Armstrong <bruce@armstronganchor.net>
 - Diab Jerius <djerius@cfa.harvard.edu>
