@@ -424,11 +424,17 @@ mostly useful when using container files.
 
 C<value> can not be used with C<class> or C<extends>.
 
+=item ref
+
+A reference to another service.  This may be paired with C<call> or C<path>.
+
 =item config
 
 The path to a configuration file, relative to L<the dir attribute|/dir>.
 The file will be read with L<Config::Any>, and the resulting data
 structure returned.
+
+C<value> can not be used with C<class> or C<extends>.
 
 =item extends
 
@@ -484,20 +490,39 @@ sub create_service {
     # Compose the parent ref into the copy, in case the parent changes
     %service_info = $self->merge_config( %service_info );
 
-    # value and class/extends are mutually exclusive
+    # value | ref | config and class/extends are mutually exclusive
     # must check after merge_config in case parent config has class/value
-    if ( exists $service_info{value} && (
-            exists $service_info{class} || exists $service_info{extends}
-        )
-    ) {
+
+    my @classy = grep  { exists $service_info{$_} } qw( class extends );
+    my @other =  grep  { exists $service_info{$_} } qw( value ref config );
+
+    if ( @other > 1 ) {
         Beam::Wire::Exception::InvalidConfig->throw(
             name => $name,
             file => $self->file,
-            error => '"value" cannot be used with "class" or "extends"',
+            error => 'use only one of "value", "ref", or "config"',
         );
     }
+
+    if ( @classy && @other  ) {  # @other == 1
+        Beam::Wire::Exception::InvalidConfig->throw(
+            name => $name,
+            file => $self->file,
+            error => qq{"$other[0]" cannot be used with "class" or "extends"},
+        );
+    }
+
     if ( exists $service_info{value} ) {
         return $service_info{value};
+    }
+
+    if ( exists $service_info{ref} ){
+        # at this point the service info is normalized, so none of the
+        # meta keys have a prefix.  this will cause resolve_ref some angst,
+        # so de-normalize them
+        my %meta = $self->get_meta_names;
+        my %de_normalized = map { $meta{$_} // $_ => $service_info{$_} } keys %service_info;
+        return ( $self->resolve_ref( $name, \%de_normalized ) )[0];
     }
 
     if ( $service_info{config} ) {
@@ -512,7 +537,7 @@ sub create_service {
         Beam::Wire::Exception::InvalidConfig->throw(
             name => $name,
             file => $self->file,
-            error => 'Service configuration incomplete. Missing one of "class", "value", "config"',
+            error => 'Service configuration incomplete. Missing one of "class", "value", "config", "ref"',
         );
     }
 
@@ -1069,6 +1094,41 @@ sub validate {
         my %config = %{ $self->get_config($name) };
         %config = $self->merge_config(%config);
 
+        my @classy = grep  { exists $config{$_} } qw( class extends );
+        my @other =  grep  { exists $config{$_} } qw( value ref config );
+
+        if ( @other > 1 ) {
+            $error_count++;
+            my $error = 'use only one of "value", "ref", or "config"';
+
+            if ($show_all_errors) {
+                print qq(Invalid config for service '$name': $error\n);
+                next;
+            }
+
+            Beam::Wire::Exception::InvalidConfig->throw(
+                name => $name,
+                file => $self->file,
+                error => $error,
+            );
+        }
+
+        if ( @classy && @other  ) {  # @other == 1
+            $error_count++;
+            my $error = qq{"$other[0]" cannot be used with "class" or "extends"};
+
+            if ($show_all_errors) {
+                print qq(Invalid config for service '$name': $error\n);
+                next;
+            }
+
+            Beam::Wire::Exception::InvalidConfig->throw(
+                name => $name,
+                file => $self->file,
+                error => $error,
+            );
+        }
+
         if ( exists $config{value} && ( exists $config{class} || exists $config{extends})) {
             $error_count++;
             if ($show_all_errors) {
@@ -1091,7 +1151,7 @@ sub validate {
             %config = %{ $self->_load_config("$conf_path") };
         }
 
-        unless ( $config{value} || $config{class} || $config{extends} ) {
+        unless ( $config{value} || $config{class} || $config{extends} || $config{ref} ) {
             next;
         }
 
