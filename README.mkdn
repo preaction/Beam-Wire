@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.025
+version 1.026
 
 # STATUS
 
@@ -221,11 +221,17 @@ contain the following keys:
 
     `value` can not be used with `class` or `extends`.
 
+- ref
+
+    A reference to another service.  This may be paired with `call` or `path`.
+
 - config
 
     The path to a configuration file, relative to [the dir attribute](#dir).
     The file will be read with [Config::Any](https://metacpan.org/pod/Config::Any), and the resulting data
     structure returned.
+
+    `value` can not be used with `class` or `extends`.
 
 - extends
 
@@ -279,7 +285,8 @@ so a service can extend a service that extends another service just fine.
 
 When merging, hashes are combined, with the child configuration taking
 precedence. The `args` key is handled specially to allow a hash of
-args to be merged.
+args to be merged. A single element array of args is merged too, if the
+element is a hash.
 
 The configuration returned is a safe copy and can be modified without
 effecting the original config.
@@ -488,8 +495,10 @@ This event will bubble up from child containers.
 - Bruce Armstrong <bruce@armstronganchor.net>
 - Diab Jerius <djerius@cfa.harvard.edu>
 - Kent Fredric <kentnl@cpan.org>
+- mauke <lukasmai.403@gmail.com>
 - Mohammad S Anwar <mohammad.anwar@yahoo.com>
 - mohawk2 <mohawk2@users.noreply.github.com>
+- Sven Willenbuecher <sven.willenbuecher@gmx.de>
 
 # COPYRIGHT AND LICENSE
 
