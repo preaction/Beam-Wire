@@ -2,6 +2,8 @@ Changelog for Beam-Wire
 
 {{ $NEXT }}
 
+1.026     2024-09-13 09:28:36-05:00 America/Chicago
+
   [Added]
 
   - Added bare `$ref` services. Now a new service can be created as
