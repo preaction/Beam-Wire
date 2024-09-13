@@ -613,7 +613,7 @@ sub merge_config {
     my ( $self, %service_info ) = @_;
     if ( $service_info{ extends } ) {
         my $base_config_ref = $self->get_config( $service_info{extends} );
-        unless ( $base_config_ref ) { 
+        unless ( $base_config_ref ) {
             Beam::Wire::Exception::NotFound->throw(
                 name => $service_info{extends},
                 file => $self->file,
@@ -777,7 +777,6 @@ sub is_meta {
     return unless @keys;
 
     my %meta = $self->get_meta_names;
-    my %meta_names = map { $_ => 1 } values %meta;
 
     # A regular service does not need the prefix, but must consist
     # only of meta keys
