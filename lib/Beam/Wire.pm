@@ -602,7 +602,8 @@ so a service can extend a service that extends another service just fine.
 
 When merging, hashes are combined, with the child configuration taking
 precedence. The C<args> key is handled specially to allow a hash of
-args to be merged.
+args to be merged. A single element array of args is merged too, if the
+element is a hash.
 
 The configuration returned is a safe copy and can be modified without
 effecting the original config.
@@ -624,6 +625,9 @@ sub merge_config {
         my $args;
         if ( ref $service_info{args} eq 'HASH' && ref $base_config{args} eq 'HASH' ) {
             $args = { %{ delete $base_config{args} }, %{ delete $service_info{args} } };
+        } elsif ( ref $service_info{args} eq 'ARRAY' && @{ $service_info{args} } == 1 && ref $service_info{args}->[0] eq 'HASH' &&
+                  ref $base_config{args}  eq 'ARRAY' && @{ $base_config{args} }  == 1 && ref $base_config{args}->[0]  eq 'HASH' ) {
+            $args = [ { %{ delete($base_config{args})->[0] }, %{ delete($service_info{args})->[0] } } ];
         }
         %service_info = ( $self->merge_config( %base_config ), %service_info );
         if ( $args ) {
