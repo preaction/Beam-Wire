@@ -936,9 +936,36 @@ and C<config> services.
 =item $call
 
 Call a method on the referenced object and use the resulting value. This
-may be a string, which will be the method name to call, or a hash with
-C<$method> and C<$args>, which are the method name to call and the
-arguments to that method, respectively.
+may be:
+
+=over
+
+=item a string
+
+the method name to call;
+
+=item a hash
+
+a hash with C<$method> and C<$args>, which are the method name to call
+and the arguments to that method, respectively;
+
+=item an array of hashes
+
+These describe a list of methods that will be called.  Each method
+is represented by a hash with a C<method> element, providing
+the name of the method, and optional C<args> element providing
+the arguments to be passed, and an optional C<return> element,
+which determines the value passed on to the next method or, if
+the last in the list of methods, the value returned upstream.
+
+For a given method, if it's B<return> value is C<chain>,
+then the result returned by the method is used as the
+invocant of the next method in the list. If empty, or non-existent,
+the original object is used and the result is discarded.
+
+If an array is used, the top-level C<args> key is not used.
+
+=back
 
     captain:
         class: Person
@@ -953,6 +980,15 @@ arguments to that method, respectively.
                     $method: get_bounty
                     $args:
                         name: mreynolds
+            repair:
+                $ref: firefly
+                $call:
+                    - method: broken
+                      return: chain
+                    - method: parts
+                      return: chain
+                    - method: available
+                      return: chain
 
 =back
 
@@ -977,16 +1013,30 @@ sub resolve_ref {
 
         if ( ref $call eq 'HASH' ) {
             $method = $call->{ $meta{method} };
-            my $args = $call->{ $meta{args} };
-            @args = !$args ? ()
+            if ( ref $method eq 'ARRAY' ) {
+                for my $m ( @{$method} ) {
+                    my $method_name = $m->{method};
+                    my $return = $m->{return} || q{};
+                    @args = defined $m->{args} ? @{ $m->{args} } : ();
+                    my $output = $service->$method_name( @args );
+                    $service =  $return eq 'chain' ? $output
+                     : $service;
+                }
+                @ref = $service;
+            }
+            else {
+                my $args = $call->{ $meta{args} };
+                @args = !$args ? ()
                   : ref $args eq 'ARRAY'  ? @{ $args }
                   : $args;
+                @ref = $service->$method( @args );
+            }
         }
         else {
             $method = $call;
+            @ref = $service->$method( @args );
         }
 
-        @ref = $service->$method( @args );
     }
     elsif ( my $method = $arg->{ $meta{method} } ) {
         _deprecated( 'warning: (deprecated) Using "$method" to get a value in a dependency is now "$call" in service "' . $for . '"' );
