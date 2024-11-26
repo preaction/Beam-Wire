@@ -49,18 +49,17 @@ see Beam::Wire::Help::Config|Beam::Wire::Help::Config>.
 use strict;
 use warnings;
 
+use constant DEBUG => $ENV{BEAM_WIRE_DEBUG};
+
 use Scalar::Util qw( blessed );
 use Moo;
 use Config::Any;
 use Module::Runtime qw( use_module );
-use Data::DPath qw ( dpath );
 use Path::Tiny qw( path );
-use File::Basename qw( dirname );
 use Types::Standard qw( :all );
-use Data::Dumper;
+use if DEBUG, 'Data::Dumper' => qw( Dumper );
 use Beam::Wire::Event::ConfigService;
 use Beam::Wire::Event::BuildService;
-use constant DEBUG => $ENV{BEAM_WIRE_DEBUG};
 with 'Beam::Emitter';
 
 =attr file
@@ -258,7 +257,7 @@ sub get {
             );
         }
 
-        ; print STDERR "Got service config: " . Dumper $config_ref if DEBUG;
+        ; print STDERR "Got service config: " . Dumper( $config_ref ) if DEBUG;
 
         if ( ref $config_ref eq 'HASH' && $self->is_meta( $config_ref, 1 ) ) {
             my %config  = %{ $self->normalize_config( $config_ref ) };
@@ -272,7 +271,7 @@ sub get {
         }
     }
 
-    ; print STDERR "Returning service: " . Dumper $service if DEBUG;
+    ; print STDERR "Returning service: " . Dumper( $service ) if DEBUG;
 
     return $service;
 }
@@ -352,7 +351,7 @@ check|/is_meta>.
 sub normalize_config {
     my ( $self, $conf ) = @_;
 
-    ; print STDERR "In conf: " . Dumper $conf if DEBUG;
+    ; print STDERR "In conf: " . Dumper( $conf ) if DEBUG;
 
     my %meta = reverse $self->get_meta_names;
 
@@ -369,7 +368,7 @@ sub normalize_config {
         }
     }
 
-    ; print STDERR "Out conf: " . Dumper \%out_conf if DEBUG;
+    ; print STDERR "Out conf: " . Dumper( \%out_conf ) if DEBUG;
 
     return \%out_conf;
 }
@@ -485,7 +484,7 @@ L<resolving references|resolve_ref> as needed.
 sub create_service {
     my ( $self, $name, %service_info ) = @_;
 
-    ; print STDERR "Creating service: " . Dumper \%service_info if DEBUG;
+    ; print STDERR "Creating service: " . Dumper( \%service_info ) if DEBUG;
 
     # Compose the parent ref into the copy, in case the parent changes
     %service_info = $self->merge_config( %service_info );
@@ -744,7 +743,7 @@ dependencies are created first.
 sub find_refs {
     my ( $self, $for, @args ) = @_;
 
-    ; printf STDERR qq{Searching for refs for "%s": %s}, $for, Dumper \@args if DEBUG;
+    ; printf STDERR qq{Searching for refs for "%s": %s}, $for, Dumper( \@args ) if DEBUG;
 
     my @out;
     my %meta = $self->get_meta_names;
@@ -755,7 +754,7 @@ sub find_refs {
                     push @out, $self->resolve_ref( $for, $arg );
                 }
                 else { # Try to treat it as a service to create
-                    ; print STDERR "Creating anonymous service: " . Dumper $arg if DEBUG;
+                    ; print STDERR "Creating anonymous service: " . Dumper( $arg ) if DEBUG;
 
                     my %service_info = %{ $self->normalize_config( $arg ) };
                     push @out, $self->create_service( '$anonymous', %service_info );
@@ -923,7 +922,7 @@ sub resolve_ref {
     # resolve service ref w/path
     if ( my $path = $arg->{ $meta{path} } ) {
         # locate foreign service data
-        my $conf = $self->get_config($name);
+        use_module( 'Data::DPath' );
         @ref = dpath( $path )->match($service);
     }
     elsif ( my $call = $arg->{ $meta{call} } ) {
@@ -979,7 +978,7 @@ sub fix_refs {
     for my $arg ( @args ) {
         if ( ref $arg eq 'HASH' ) {
             if ( $self->is_meta( $arg, 1 ) ) {
-                #; print STDERR 'Fixing refs for arg: ' . Dumper $arg;
+                #; print STDERR 'Fixing refs for arg: ' . Dumper( $arg );
                 my %new = %$arg;
                 for my $key ( keys %new ) {
                     if ( $key =~ /(?:ref|extends)$/ ) {
@@ -989,7 +988,7 @@ sub fix_refs {
                         ( $new{ $key } ) = $self->fix_refs( $container_name, $new{ $key } );
                     }
                 }
-                #; print STDERR 'Fixed refs for arg: ' . Dumper \%new;
+                #; print STDERR 'Fixed refs for arg: ' . Dumper( \%new );
                 push @out, \%new;
             }
             else {
