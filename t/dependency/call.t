@@ -93,4 +93,39 @@ subtest 'method with arrayref of arguments' => sub {
     cmp_deeply $svc->got_ref, [ 'World', 'Hello' ] or diag explain $svc->got_ref;
 };
 
+subtest 'method chain' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            foo => {
+                class => 'My::RefTest',
+                args => {
+                    got_ref => {
+                        '$ref' => 'greeting',
+                        '$call' => {
+                            '$method' => [
+                                {
+                                    method => 'got_args_hash',
+                                    args => [ 'default', 'hello' ],
+                                    return => 'chain',
+                                }
+                            ],
+                        },
+                    },
+                },
+            },
+            greeting => {
+                class => 'My::ArgsTest',
+                args => {
+                    hello => "Hello",
+                    default => 'World',
+                },
+            },
+        },
+    );
+    my $svc;
+    lives_ok { $svc = $wire->get( 'foo' ) };
+    isa_ok $svc, 'My::RefTest';
+    cmp_deeply $svc->got_ref, [ 'World', 'Hello' ] or diag explain $svc->got_ref;
+};
+
 done_testing;
