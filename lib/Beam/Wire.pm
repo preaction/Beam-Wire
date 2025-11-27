@@ -922,7 +922,7 @@ sub resolve_ref {
     # resolve service ref w/path
     if ( my $path = $arg->{ $meta{path} } ) {
         # locate foreign service data
-        use_module( 'Data::DPath' );
+        use_module( 'Data::DPath' )->import('dpath');
         @ref = dpath( $path )->match($service);
     }
     elsif ( my $call = $arg->{ $meta{call} } ) {
