@@ -1,5 +1,5 @@
 package Beam::Wire::Event::BuildService;
-our $VERSION = '1.027';
+our $VERSION = '1.028';
 # ABSTRACT: Event fired when building a new service
 
 =head1 SYNOPSIS
