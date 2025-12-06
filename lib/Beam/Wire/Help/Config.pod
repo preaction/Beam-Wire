@@ -468,6 +468,28 @@ And you can set up relationships with C<$ref>:
             bounty:
                 $ref: bounty
 
+=head2 Environment Variables
+
+Like values, above, we can reference a environment variables using C<$env>.
+
+    # container.yml
+    bounty:
+        $env: CURRENT_BOUNTY
+
+These services can be used like any other. You can get the value with
+the C<get()> method:
+
+    my $bounty = $wire->get( 'bounty' );
+
+And you can set up relationships with C<$ref>:
+
+    # container.yml
+    serenity_crew:
+        class: Person
+        args:
+            bounty:
+                $ref: bounty
+
 =head2 Config Services
 
 A config service allows you to read a config file and use it as

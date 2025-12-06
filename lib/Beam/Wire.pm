@@ -493,13 +493,13 @@ sub create_service {
     # must check after merge_config in case parent config has class/value
 
     my @classy = grep  { exists $service_info{$_} } qw( class extends );
-    my @other =  grep  { exists $service_info{$_} } qw( value ref config );
+    my @other =  grep  { exists $service_info{$_} } qw( value ref config env );
 
     if ( @other > 1 ) {
         Beam::Wire::Exception::InvalidConfig->throw(
             name => $name,
             file => $self->file,
-            error => 'use only one of "value", "ref", or "config"',
+            error => 'use only one of "value", "ref", "env", or "config"',
         );
     }
 
@@ -513,6 +513,10 @@ sub create_service {
 
     if ( exists $service_info{value} ) {
         return $service_info{value};
+    }
+
+    if ( exists $service_info{env} ) {
+        return $ENV{$service_info{env}};
     }
 
     if ( exists $service_info{ref} ){
@@ -786,7 +790,7 @@ hashes inside of larger data structures.
 
 A service hash reference must contain at least one key, and must either
 contain a L<prefixed|/meta_prefix> key that could create or reference an
-object (one of C<class>, C<extends>, C<config>, C<value>, or C<ref>) or,
+object (one of C<class>, C<extends>, C<config>, C<value>, C<env>, or C<ref>) or,
 if the C<$root> flag exists, be made completely of unprefixed meta keys
 (as returned by L<the get_meta_names method|/get_meta_names>).
 
@@ -816,7 +820,7 @@ sub is_meta {
     return 1
         if grep { exists $arg->{ $_ } }
             map { $meta{ $_ } }
-            qw( ref class extends config value );
+            qw( ref class extends config value env );
 
     # Must not be meta
     return;
@@ -848,6 +852,7 @@ sub get_meta_names {
         with        => "${prefix}with",
         value       => "${prefix}value",
         config      => "${prefix}config",
+        env         => "${prefix}env",
     );
     return wantarray ? %meta : \%meta;
 }
