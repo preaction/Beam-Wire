@@ -84,20 +84,31 @@ has file => (
 
 =attr dir
 
-The directory path to use when searching for inner container files.
-Defaults to the directory which contains the file specified by the
-L<file attribute|/file>.
+The directory path or paths to use when searching for inner container files.
+Defaults to using the directory which contains the file specified by the
+L<file attribute|/file> followed by the C<BEAM_PATH> environment variable
+(separated by colons C<:>).
 
 =cut
 
 has dir => (
     is      => 'ro',
-    isa     => InstanceOf['Path::Tiny'],
+    isa     => ArrayRef[InstanceOf['Path::Tiny']],
     lazy    => 1,
-    default => sub { $_[0]->file->parent },
+    default => sub {
+      my $dir = [
+        ($_[0]->file ? ($_[0]->file->parent) : ()),
+        ($ENV{BEAM_PATH} ? (map { path($_) } grep !!$_, split /:/, $ENV{BEAM_PATH}) : ()),
+      ];
+      ; print 'Using default paths ', Dumper $dir if DEBUG;
+      return $dir;
+    },
     coerce => sub {
-        if ( !blessed $_[0] || !$_[0]->isa('Path::Tiny') ) {
-            return path( $_[0] );
+        if ( !ref $_[0] ) {
+            return [path( $_[0] )];
+        }
+        if ( ref $_[0] eq 'ARRAY' ) {
+          return [map { blessed( $_ ) && $_->isa('Path::Tiny') ? $_ : path($_) } @{$_[0]}];
         }
         return $_[0];
     },
@@ -696,10 +707,19 @@ sub parse_args {
         if ( $class->isa( 'Beam::Wire' ) ) {
             my %args = %{$args};
             my $config = delete $args{config};
-            # Relative subcontainer files should be from the current
-            # container's directory
+            # Subcontainer files should inherit the lookup paths of the
+            # current container, unless overridden.
+            $args{dir} //= $self->dir;
+            # Relative subcontainer files should be looked up from the list of dirs.
             if ( exists $args{file} && !path( $args{file} )->is_absolute ) {
-                $args{file} = $self->dir->child( $args{file} );
+                ; printf STDERR qq{Searching for relative container '%s' in %s}, $args{file}, Dumper( $args{dir} ) if DEBUG;
+                for my $dir ( @{ $args{dir} } ) {
+                    $dir = !(blessed $dir && $dir->isa('Path::Tiny')) ? path($dir) : $dir;
+                    if ($dir->child($args{file})->exists) {
+                        $args{file} = $dir->child( $args{file} );
+                        last;
+                    }
+                }
             }
             @args = $self->find_refs( $for, %args );
             if ( $config ) {
@@ -1343,6 +1363,11 @@ __END__
 =head1 ENVIRONMENT VARIABLES
 
 =over 4
+
+=item BEAM_PATH
+
+A colon-separated list of directories to look up inner container files. Use this
+to allow adding containers for (e.g.) Docker/Kubernetes deployments.
 
 =item BEAM_WIRE_DEBUG
 
