@@ -596,7 +596,7 @@ sub create_service {
         }
     }
     else {
-        my @args = $self->parse_args( $name, @service_info{"class","args"} );
+        my @args = $self->parse_args( $name, @service_info{"class","args","default"} );
         if ( $service_info{class}->can( 'DOES' ) && $service_info{class}->DOES( 'Beam::Service' ) ) {
             push @args, name => $name, container => $self;
         }
@@ -700,14 +700,25 @@ scalar. The arguments will be searched for references using L<the
 find_refs method|/find_refs>, and then a list of arguments will be
 returned, ready to pass to the object's constructor.
 
-Nested containers are handled specially by this method: Their inner
-references are not resolved by the parent container. This ensures that
-references are always relative to the container they're in.
+Nested containers are handled specially by this method:
+
+=over
+
+=item * Inner references are not resolved by the parent container.
+This ensures that references are always relative to the container they're in.
+
+=item * If a file is specified but cannot be found, a C<default> can be provided
+as a fallback.
+
+=back
 
 =cut
 
+# NOTE: Fallback only works on nested Beam::Wire containers right now.
+# I don't know what one could use to detect one should fall back for
+# any other kind of service...
 sub parse_args {
-    my ( $self, $for, $class, $args ) = @_;
+    my ( $self, $for, $class, $args, $fallback ) = @_;
     return if not $args;
     my @args;
     if ( ref $args eq 'ARRAY' ) {
@@ -725,6 +736,11 @@ sub parse_args {
             # Relative subcontainer files should be looked up from the list of dirs.
             if ( exists $args{file} && !path( $args{file} )->is_absolute ) {
                 $args{file} = $self->_resolve_relative_path($args{file}, $args{dir});
+            }
+            # If the file doesn't exist, try to fall back to a default
+            if ( exists $args{file} && !($args{file} && path( $args{file} )->is_file) && $fallback ) {
+                delete $args{file};
+                %args = (%args, %$fallback);
             }
             @args = $self->find_refs( $for, %args );
             if ( $config ) {

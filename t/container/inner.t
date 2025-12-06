@@ -181,7 +181,47 @@ subtest 'resolve from multiple directories' => sub {
 
     isa_ok $inner->get('container/foo'), 'My::Service', 'inner container inherits lookup dirs from parent container';
     isnt $inner->get('container/foo'), $foo, 'relative containers do not share caches';
-  }
+  };
+
+  subtest 'fallback default' => sub {
+    subtest 'fall back to default if file is missing' => sub {
+      my $wire = Beam::Wire->new(
+          dir => [],
+          config => {
+              container => {
+                  class => 'Beam::Wire',
+                  args => { file => $SINGLE_FILE->basename },
+                  default => {
+                      config => {
+                          'foo' => 'value',
+                      },
+                  },
+              },
+          },
+      );
+
+      my $foo = $wire->get( 'container/foo' );
+      is $foo, 'value', 'fallback default is used';
+    };
+
+    subtest 'default can specify fallback file' => sub {
+      my $wire = Beam::Wire->new(
+          dir => [],
+          config => {
+              container => {
+                  class => 'Beam::Wire',
+                  args => { file => $SINGLE_FILE->basename },
+                  default => {
+                      file => $DEEP_FILE->absolute,
+                  },
+              },
+          },
+      );
+
+      my $buzz = $wire->get( 'container/buzz' );
+      isa_ok $buzz, 'My::ArgsTest', 'fallback file is used';
+    };
+  };
 };
 
 done_testing;

@@ -550,9 +550,9 @@ object.
             cargo:
                 $config: manifest.yml
 
-Relative config files will be searched for in the same directories as relative
-containers (the C<dir> attribute on the container, or the C<BEAM_PATH> environment variable). If 
-the file is not found, you can use C<$default> to fall back to a default.
+Relative config files will be searched for in the same directories as L</nested
+containers>. If the file is not found, you can use C<$default> to fall back to
+a default.
 
     # container.yml
     serenity:
@@ -639,8 +639,19 @@ multiple containers into one.
     my $actor = $wire->get( 'actors/malcolm' );
 
 Nested container file paths are relative to the current container file
-by default. If needed, you can set the L<dir attribute|Beam::Wire/dir>
-to change what directory to search in.
+by default, with directories in C<BEAM_PATH> environment variable appended.
+If needed, you can set the L<dir attribute|Beam::Wire/dir> to change what
+directories to search in. If the container file is not found, you can
+use C<$default> to choose a different file or specify services directly.
+
+    # container.yml
+    destination:
+        class: Beam::Wire
+        args:
+            file: current_flight_plan.yml
+        default:
+            config:
+                location: Right Here
 
 =head2 Event Handlers (on)
 
