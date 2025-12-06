@@ -541,8 +541,8 @@ sub create_service {
 
     if ( $service_info{config} ) {
         my $conf_path = path( $service_info{config} );
-        if ( $self->file ) {
-            $conf_path = path( $self->file )->parent->child( $conf_path );
+        if ( !$conf_path->is_absolute ) {
+            $conf_path = $self->_resolve_relative_path($conf_path);
         }
         return $self->_load_config( "$conf_path" );
     }
@@ -712,14 +712,7 @@ sub parse_args {
             $args{dir} //= $self->dir;
             # Relative subcontainer files should be looked up from the list of dirs.
             if ( exists $args{file} && !path( $args{file} )->is_absolute ) {
-                ; printf STDERR qq{Searching for relative container '%s' in %s}, $args{file}, Dumper( $args{dir} ) if DEBUG;
-                for my $dir ( @{ $args{dir} } ) {
-                    $dir = !(blessed $dir && $dir->isa('Path::Tiny')) ? path($dir) : $dir;
-                    if ($dir->child($args{file})->exists) {
-                        $args{file} = $dir->child( $args{file} );
-                        last;
-                    }
-                }
+                $args{file} = $self->_resolve_relative_path($args{file}, $args{dir});
             }
             @args = $self->find_refs( $for, %args );
             if ( $config ) {
@@ -1090,6 +1083,18 @@ sub _load_config {
     }
 
    return "HASH" eq ref $loader ? (values(%{$loader}))[0] : {};
+}
+
+sub _resolve_relative_path {
+    my ( $self, $file, $dirs ) = @_;
+    $dirs //= $self->dir;
+    ; printf STDERR qq{Searching for path '%s' in %s}, $file, Dumper( $dirs ) if DEBUG;
+    for my $dir ( @{ $dirs } ) {
+        $dir = !(blessed $dir && $dir->isa('Path::Tiny')) ? path($dir) : $dir;
+        if ($dir->child($file)->exists) {
+            return $dir->child( $file );
+        }
+    }
 }
 
 # Check config file for known issues and report

@@ -35,7 +35,7 @@ subtest 'yaml config file' => sub {
     lives_ok { $svc = $wire->get( 'yaml' ) };
     cmp_deeply $svc, $EXPECT;
 
-    subtest 'config is relative to container file location' => sub {
+    subtest 'config is relative to container dir attribute' => sub {
         my $wire = Beam::Wire->new(
             file => $SHARE_DIR->child( 'with_config.yml' )->relative( cwd )->stringify,
         );
@@ -43,6 +43,17 @@ subtest 'yaml config file' => sub {
         my $svc;
         lives_ok { $svc = $wire->get( 'yaml' ) };
         cmp_deeply $svc, $EXPECT;
+    };
+
+    subtest 'config looks in multiple directories' => sub {
+        my $wire = Beam::Wire->new(
+            dir => [$SHARE_DIR->child('beam_path'), $SHARE_DIR],
+            file => $SHARE_DIR->child( 'with_config.yml' )->relative( cwd )->stringify,
+        );
+
+        my $svc;
+        lives_ok { $svc = $wire->get( 'yaml' ) };
+        cmp_deeply $svc, { foo => 'OVERRIDDEN' };
     };
 
     subtest 'absolute path works' => sub {
