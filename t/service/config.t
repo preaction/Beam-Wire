@@ -65,6 +65,38 @@ subtest 'yaml config file' => sub {
         lives_ok { $svc = $wire->get( 'yaml' ) };
         cmp_deeply $svc, $EXPECT;
     };
+
+    subtest 'config file missing returns empty' => sub {
+        # This is not ideal, but it's the behavior we had before I added $default and so this is the behavior we'll have after... for now...
+        my $wire = Beam::Wire->new(
+            dir => [],
+            config => {
+              yaml => {
+                '$config' => 'missing.yml',
+              }
+            }
+        );
+        my $svc;
+        lives_ok { $svc = $wire->get( 'yaml' ) };
+        cmp_deeply $svc, undef;
+    };
+
+    subtest 'config file missing uses $default' => sub {
+        my $wire = Beam::Wire->new(
+            dir => [],
+            config => {
+              yaml => {
+                '$config' => 'missing.yml',
+                '$default' => { foo => 'DEFAULT' },
+              }
+            }
+        );
+
+        my $svc;
+        lives_ok { $svc = $wire->get( 'yaml' ) };
+        cmp_deeply $svc, { foo => 'DEFAULT' };
+    };
+
 };
 
 done_testing;

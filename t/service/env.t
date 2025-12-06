@@ -20,4 +20,21 @@ subtest 'env service' => sub {
     is $greeting, $ENV{GREETING};
 };
 
+subtest 'default value' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            greeting => {
+                '$env' => 'GREETING',
+                '$default' => 'DEFAULT',
+            }
+        },
+    );
+
+    local %ENV = %ENV;
+    delete $ENV{GREETING};
+    my $greeting;
+    lives_ok { $greeting = $wire->get( 'greeting' ) };
+    is $greeting, 'DEFAULT';
+};
+
 done_testing;

@@ -442,9 +442,18 @@ A reference to another service.  This may be paired with C<call> or C<path>.
 
 The path to a configuration file, relative to L<the dir attribute|/dir>.
 The file will be read with L<Config::Any>, and the resulting data
-structure returned.
+structure returned. If the config file does not exist, will return the
+data in the C<$default> attribute. If the C<$default> attribute does not
+exist, will return C<undef>.
 
-C<value> can not be used with C<class> or C<extends>.
+C<config> can not be used with C<class> or C<extends>.
+
+=item env
+
+Get the value from an environment variable. If the environment variable does not exist, will return the
+data in the C<$default> attribute. If the C<$default> attribute does not exist, will return C<undef>.
+
+C<env> can not be used with C<class> or C<extends>.
 
 =item extends
 
@@ -527,7 +536,7 @@ sub create_service {
     }
 
     if ( exists $service_info{env} ) {
-        return $ENV{$service_info{env}};
+        return exists $ENV{$service_info{env}} ? $ENV{$service_info{env}} : ($service_info{default} // undef);
     }
 
     if ( exists $service_info{ref} ){
@@ -543,6 +552,9 @@ sub create_service {
         my $conf_path = path( $service_info{config} );
         if ( !$conf_path->is_absolute ) {
             $conf_path = $self->_resolve_relative_path($conf_path);
+        }
+        if ($service_info{default} && (!$conf_path || !$conf_path->is_file)) {
+            return $service_info{default};
         }
         return $self->_load_config( "$conf_path" );
     }
@@ -866,6 +878,7 @@ sub get_meta_names {
         value       => "${prefix}value",
         config      => "${prefix}config",
         env         => "${prefix}env",
+        default     => "${prefix}default",
     );
     return wantarray ? %meta : \%meta;
 }
