@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.026
+version 1.027
 
 # STATUS
 
@@ -50,7 +50,7 @@ allowing users to easily add their own code to customize how your
 project behaves.
 
 For an [introduction to the Beam::Wire service configuration format,
-see Beam::Wire::Help::Config](https://metacpan.org/pod/Beam::Wire::Help::Config).
+see Beam::Wire::Help::Config](https://metacpan.org/pod/Beam%3A%3AWire%3A%3AHelp%3A%3AConfig).
 
 # ATTRIBUTES
 
@@ -59,21 +59,22 @@ see Beam::Wire::Help::Config](https://metacpan.org/pod/Beam::Wire::Help::Config)
 The path of the file where services are configured (typically a YAML
 file). The file's contents should be a single hashref. The keys are
 service names, and the values are [service
-configurations](https://metacpan.org/pod/Beam::Wire::Help::Config).
+configurations](https://metacpan.org/pod/Beam%3A%3AWire%3A%3AHelp%3A%3AConfig).
 
 ## dir
 
-The directory path to use when searching for inner container files.
-Defaults to the directory which contains the file specified by the
-[file attribute](#file).
+The directory path or paths to use when searching for inner container files.
+Defaults to using the directory which contains the file specified by the
+[file attribute](#file) followed by the `BEAM_PATH` environment variable
+(separated by colons `:`).
 
 ## config
 
 The raw configuration data. By default, this data is loaded by
-[Config::Any](https://metacpan.org/pod/Config::Any) using the file specified by the [file attribute](#file).
+[Config::Any](https://metacpan.org/pod/Config%3A%3AAny) using the file specified by the [file attribute](#file).
 
 See [Beam::Wire::Help::Config for details on what the configuration
-data structure looks like](https://metacpan.org/pod/Beam::Wire::Help::Config).
+data structure looks like](https://metacpan.org/pod/Beam%3A%3AWire%3A%3AHelp%3A%3AConfig).
 
 If you don't want to load a file, you can specify this attribute in the
 Beam::Wire constructor.
@@ -193,7 +194,7 @@ contain the following keys:
     hash which will be dereferenced and passed in to the constructor
     as a list.
 
-    If the `class` consumes the [Beam::Service role](https://metacpan.org/pod/Beam::Service),
+    If the `class` consumes the [Beam::Service role](https://metacpan.org/pod/Beam%3A%3AService),
     the service's `name` and `container` will be added to the `args`.
 
 - method
@@ -209,7 +210,7 @@ contain the following keys:
     key works like the top-level `args` key, above. The optional `return`
     key can have the special value `"chain"`, which will use the return
     value from the method as the value for the service ([The tutorial shows
-    examples of this](https://metacpan.org/pod/Beam::Wire::Help::Config#Multiple-Constructor-Methods)).
+    examples of this](https://metacpan.org/pod/Beam%3A%3AWire%3A%3AHelp%3A%3AConfig#Multiple-Constructor-Methods)).
 
     If an array is used, the top-level `args` key is not used.
 
@@ -228,10 +229,19 @@ contain the following keys:
 - config
 
     The path to a configuration file, relative to [the dir attribute](#dir).
-    The file will be read with [Config::Any](https://metacpan.org/pod/Config::Any), and the resulting data
-    structure returned.
+    The file will be read with [Config::Any](https://metacpan.org/pod/Config%3A%3AAny), and the resulting data
+    structure returned. If the config file does not exist, will return the
+    data in the `$default` attribute. If the `$default` attribute does not
+    exist, will return `undef`.
 
-    `value` can not be used with `class` or `extends`.
+    `config` can not be used with `class` or `extends`.
+
+- env
+
+    Get the value from an environment variable. If the environment variable does not exist, will return the
+    data in the `$default` attribute. If the `$default` attribute does not exist, will return `undef`.
+
+    `env` can not be used with `class` or `extends`.
 
 - extends
 
@@ -248,15 +258,15 @@ contain the following keys:
     can be a single string, or an array reference of strings which are roles
     to combine.
 
-    This uses [Moo::Role](https://metacpan.org/pod/Moo::Role) and [the create\_class\_with\_roles
-    method](https://metacpan.org/pod/Role::Tiny#create_class_with_roles), which should work with any
-    class (as it uses [the Role::Tiny module](https://metacpan.org/pod/Role::Tiny) under the hood).
+    This uses [Moo::Role](https://metacpan.org/pod/Moo%3A%3ARole) and [the create\_class\_with\_roles
+    method](https://metacpan.org/pod/Role%3A%3ATiny#create_class_with_roles), which should work with any
+    class (as it uses [the Role::Tiny module](https://metacpan.org/pod/Role%3A%3ATiny) under the hood).
 
     This can be used with the `class` key.
 
 - on
 
-    Attach an event handler to a [Beam::Emitter subclass](https://metacpan.org/pod/Beam::Emitter). This
+    Attach an event handler to a [Beam::Emitter subclass](https://metacpan.org/pod/Beam%3A%3AEmitter). This
     is an array of hashes of event names and handlers. A handler is made from
     a service reference (`$ref` or an anonymous service), and a subroutine to
     call on that service (`$sub`).
@@ -303,9 +313,12 @@ scalar. The arguments will be searched for references using [the
 find\_refs method](#find_refs), and then a list of arguments will be
 returned, ready to pass to the object's constructor.
 
-Nested containers are handled specially by this method: Their inner
-references are not resolved by the parent container. This ensures that
-references are always relative to the container they're in.
+Nested containers are handled specially by this method:
+
+- Inner references are not resolved by the parent container.
+This ensures that references are always relative to the container they're in.
+- If a file is specified but cannot be found, a `default` can be provided
+as a fallback.
 
 ## find\_refs
 
@@ -333,7 +346,7 @@ hashes inside of larger data structures.
 
 A service hash reference must contain at least one key, and must either
 contain a [prefixed](#meta_prefix) key that could create or reference an
-object (one of `class`, `extends`, `config`, `value`, or `ref`) or,
+object (one of `class`, `extends`, `config`, `value`, `env`, or `ref`) or,
 if the `$root` flag exists, be made completely of unprefixed meta keys
 (as returned by [the get\_meta\_names method](#get_meta_names)).
 
@@ -462,7 +475,7 @@ instantiated or any classes loaded. This allows altering of the
 configuration before the service is built. Already-built services will
 not fire this event.
 
-Event handlers get a [Beam::Wire::Event::ConfigService](https://metacpan.org/pod/Beam::Wire::Event::ConfigService) object as their
+Event handlers get a [Beam::Wire::Event::ConfigService](https://metacpan.org/pod/Beam%3A%3AWire%3A%3AEvent%3A%3AConfigService) object as their
 only argument.
 
 This event will bubble up from child containers.
@@ -472,12 +485,17 @@ This event will bubble up from child containers.
 This event is emitted when a new service is built. Cached services will
 not fire this event.
 
-Event handlers get a [Beam::Wire::Event::BuildService](https://metacpan.org/pod/Beam::Wire::Event::BuildService) object as their
+Event handlers get a [Beam::Wire::Event::BuildService](https://metacpan.org/pod/Beam%3A%3AWire%3A%3AEvent%3A%3ABuildService) object as their
 only argument.
 
 This event will bubble up from child containers.
 
 # ENVIRONMENT VARIABLES
+
+- BEAM\_PATH
+
+    A colon-separated list of directories to look up inner container files. Use this
+    to allow adding containers for (e.g.) Docker/Kubernetes deployments.
 
 - BEAM\_WIRE\_DEBUG
 
@@ -498,7 +516,7 @@ This event will bubble up from child containers.
 - mauke <lukasmai.403@gmail.com>
 - Mohammad S Anwar <mohammad.anwar@yahoo.com>
 - mohawk2 <mohawk2@users.noreply.github.com>
-- Sven Willenbuecher <sven.willenbuecher@gmx.de>
+- Sven Willenbuecher <sven.willenbuecher@kuehne-nagel.com>
 
 # COPYRIGHT AND LICENSE
 
