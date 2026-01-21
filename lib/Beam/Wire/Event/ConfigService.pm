@@ -1,5 +1,5 @@
 package Beam::Wire::Event::ConfigService;
-our $VERSION = '1.028';
+our $VERSION = '1.029';
 # ABSTRACT: Event fired when configuring a new service
 
 =head1 SYNOPSIS

@@ -1,5 +1,5 @@
 package Beam::Wire;
-our $VERSION = '1.028';
+our $VERSION = '1.029';
 # ABSTRACT: Lightweight Dependency Injection Container
 
 =head1 SYNOPSIS
