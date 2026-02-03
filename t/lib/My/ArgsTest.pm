@@ -1,6 +1,8 @@
 package
     My::ArgsTest;
 
+our $VERSION = '0.001';
+
 use Moo;
 
 has got_args => ( is => 'ro' );
