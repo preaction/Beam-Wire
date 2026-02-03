@@ -573,7 +573,7 @@ sub create_service {
         config => \%service_info,
     );
 
-    use_module( $service_info{class} );
+    $service_info{version} ? use_module( $service_info{class}, $service_info{version} ) : use_module( $service_info{class} );
 
     if ( my $with = $service_info{with} ) {
         my @roles = ref $with ? @{ $with } : ( $with );
@@ -885,6 +885,7 @@ sub get_meta_names {
         method      => "${prefix}method",
         args        => "${prefix}args",
         class       => "${prefix}class",
+        version     => "${prefix}version",
         extends     => "${prefix}extends",
         sub         => "${prefix}sub",
         call        => "${prefix}call",
