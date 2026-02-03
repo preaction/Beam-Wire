@@ -6,6 +6,20 @@ use Test::Lib;
 use Scalar::Util qw( refaddr );
 use Beam::Wire;
 
+subtest 'class no args' => sub {
+    my $wire = Beam::Wire->new(
+        config => {
+            foo => {
+                class => 'My::ArgsTest',
+            },
+        },
+    );
+
+    my $foo;
+    lives_ok { $foo = $wire->get( 'foo' ) };
+    cmp_deeply $foo->got_args, [ ];
+};
+
 subtest 'class args: hash' => sub {
     my $wire = Beam::Wire->new(
         config => {
@@ -53,6 +67,21 @@ subtest 'class args: array' => sub {
     my $foo;
     lives_ok { $foo = $wire->get( 'foo' ) };
     cmp_deeply $foo->got_args, [qw( foo bar )];
+
+    subtest 'empty array' => sub {
+        my $wire = Beam::Wire->new(
+            config => {
+                foo => {
+                    class => 'My::ArgsTest',
+                    args => [ ],
+                },
+            },
+        );
+
+        my $foo;
+        lives_ok { $foo = $wire->get( 'foo' ) };
+        cmp_deeply $foo->got_args, [ ];
+    };
 };
 
 subtest 'class args: hashref' => sub {
