@@ -6,6 +6,8 @@ use Test::Deep;
 use Beam::Wire;
 
 subtest 'path reference' => sub {
+    eval { require Data::DPath; 1 }
+        or plan skip_all => 'recommended dependency Data::DPath is missing';
     # XXX: Deprecate this for $value => $path
     my $wire = Beam::Wire->new(
         config => {
