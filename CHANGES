@@ -2,6 +2,11 @@ Changelog for Beam-Wire
 
 {{ $NEXT }}
 
+  [Fixed]
+
+  - Fixed test failure when missing a not-required (but recommended) requirement of
+    Data::DPath. Thanks @eserte for the report and @XSven for the fix! [Github #88]
+
 1.028     2026-01-21 12:32:24-06:00 America/Chicago
 
   [Fixed]
