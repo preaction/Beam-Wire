@@ -33,6 +33,8 @@ subtest 'ref service: $call' => sub {
 };
 
 subtest 'ref service: $path' => sub {
+    eval { require Data::DPath; 1 }
+        or plan skip_all => 'recommended dependency Data::DPath is missing';
     my $wire = Beam::Wire->new(
         config => {
             subcfg => {
