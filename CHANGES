@@ -2,6 +2,8 @@ Changelog for Beam-Wire
 
 {{ $NEXT }}
 
+1.030     2026-02-04 10:51:47-06:00 America/Chicago
+
   [Added]
 
   - Added '$version' key to require a certain version of a given '$class'.
