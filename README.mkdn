@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.029
+version 1.030
 
 # STATUS
 
@@ -184,8 +184,13 @@ contain the following keys:
 
 - class
 
-    The class name of an object to create. Can be combined with `method`,
-    and `args`. An object of any class can be created with Beam::Wire.
+    The class name of an object to create. Can be combined with `version`,
+    `method`, and `args`. An object of any class can be created with Beam::Wire.
+
+- version
+
+    The minimum version required for a class based service. Has to be combined with
+    `class`.
 
 - args
 
@@ -517,6 +522,7 @@ This event will bubble up from child containers.
 - Mohammad S Anwar <mohammad.anwar@yahoo.com>
 - mohawk2 <mohawk2@users.noreply.github.com>
 - Sven Willenbuecher <sven.willenbuecher@kuehne-nagel.com>
+- XSven <XSven@users.noreply.github.com>
 
 # COPYRIGHT AND LICENSE
 

@@ -2,6 +2,11 @@ Changelog for Beam-Wire
 
 {{ $NEXT }}
 
+  [Added]
+
+  - Added '$version' key to require a certain version of a given '$class'.
+    Thanks @XSven for the PR! [Github #89][Github #92]
+
 1.029     2026-02-03 08:18:11-06:00 America/Chicago
 
   [Fixed]
