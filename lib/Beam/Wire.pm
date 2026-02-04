@@ -395,8 +395,13 @@ contain the following keys:
 
 =item class
 
-The class name of an object to create. Can be combined with C<method>,
-and C<args>. An object of any class can be created with Beam::Wire.
+The class name of an object to create. Can be combined with C<version>,
+C<method>, and C<args>. An object of any class can be created with Beam::Wire.
+
+=item version
+
+The minimum version required for a class based service. Has to be combined with
+C<class>.
 
 =item args
 
@@ -573,7 +578,7 @@ sub create_service {
         config => \%service_info,
     );
 
-    use_module( $service_info{class} );
+    $service_info{version} ? use_module( $service_info{class}, $service_info{version} ) : use_module( $service_info{class} );
 
     if ( my $with = $service_info{with} ) {
         my @roles = ref $with ? @{ $with } : ( $with );
@@ -885,6 +890,7 @@ sub get_meta_names {
         method      => "${prefix}method",
         args        => "${prefix}args",
         class       => "${prefix}class",
+        version     => "${prefix}version",
         extends     => "${prefix}extends",
         sub         => "${prefix}sub",
         call        => "${prefix}call",
