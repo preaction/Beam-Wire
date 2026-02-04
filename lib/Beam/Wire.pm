@@ -395,8 +395,13 @@ contain the following keys:
 
 =item class
 
-The class name of an object to create. Can be combined with C<method>,
-and C<args>. An object of any class can be created with Beam::Wire.
+The class name of an object to create. Can be combined with C<version>,
+C<method>, and C<args>. An object of any class can be created with Beam::Wire.
+
+=item version
+
+The minimum version required for a class based service. Has to be combined with
+C<class>.
 
 =item args
 
