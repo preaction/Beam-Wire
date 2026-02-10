@@ -223,7 +223,7 @@ sub get {
 
     ; print STDERR "Get service: $name\n" if DEBUG;
 
-    if ( $name =~ q{/} ) {
+    if ( index( $name, q{/} ) != -1 ) {
         my ( $container_name, $service_name ) = split m{/}, $name, 2;
         my $container = $self->get( $container_name );
         my $unsub_config = $container->on( configure_service => sub {
