@@ -233,8 +233,8 @@ sub get {
           my $inner_container = Beam::Wire->new(
             config => $container,
           );
-          # Cache the inner container for later use, why not?
-          $self->services->{$container_name} = $inner_container;
+          # Do not cache the inner container for later use, in case someone
+          # also tries to use the parent as a bare hashref.
           $container = $inner_container;
         }
         return $self->_get_from_inner_container($container, $container_name, $service_name, %override);
