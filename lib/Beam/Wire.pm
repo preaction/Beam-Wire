@@ -226,26 +226,18 @@ sub get {
     if ( index( $name, q{/} ) != -1 ) {
         my ( $container_name, $service_name ) = split m{/}, $name, 2;
         my $container = $self->get( $container_name );
-        my $unsub_config = $container->on( configure_service => sub {
-            my ( $event ) = @_;
-            $self->emit( configure_service =>
-                class => 'Beam::Wire::Event::ConfigService',
-                service_name => join( '/', $container_name, $event->service_name ),
-                config => $event->config,
-            );
-        } );
-        my $unsub_build = $container->on( build_service => sub {
-            my ( $event ) = @_;
-            $self->emit( build_service =>
-                class => 'Beam::Wire::Event::BuildService',
-                service_name => join( '/', $container_name, $event->service_name ),
-                service => $event->service,
-            );
-        } );
-        my $service = $container->get( $service_name, %override );
-        $unsub_config->();
-        $unsub_build->();
-        return $service;
+
+        # This could be a Beam::Wire container, or it could be a plain hashref.
+        # If it's a hashref, we can automatically create a container and then use it.
+        if (ref $container eq 'HASH' && !(blessed $container and $container->isa('Beam::Wire'))) {
+          my $inner_container = Beam::Wire->new(
+            config => $container,
+          );
+          # Cache the inner container for later use, why not?
+          $self->services->{$container_name} = $inner_container;
+          $container = $inner_container;
+        }
+        return $self->_get_from_inner_container($container, $container_name, $service_name, %override);
     }
 
     if ( keys %override ) {
@@ -285,6 +277,35 @@ sub get {
     ; print STDERR "Returning service: " . Dumper( $service ) if DEBUG;
 
     return $service;
+}
+
+sub _get_from_inner_container {
+  my ($self, $container, $container_name, $service_name, %override) = @_;
+
+  # Bubble up the events from the inner container
+  my $unsub_config = $container->on( configure_service => sub {
+      my ( $event ) = @_;
+      $self->emit( configure_service =>
+          class => 'Beam::Wire::Event::ConfigService',
+          service_name => join( '/', $container_name, $event->service_name ),
+          config => $event->config,
+      );
+  } );
+  my $unsub_build = $container->on( build_service => sub {
+      my ( $event ) = @_;
+      $self->emit( build_service =>
+          class => 'Beam::Wire::Event::BuildService',
+          service_name => join( '/', $container_name, $event->service_name ),
+          service => $event->service,
+      );
+  } );
+
+  my $service = $container->get( $service_name, %override );
+
+  $unsub_config->();
+  $unsub_build->();
+
+  return $service;
 }
 
 =method set

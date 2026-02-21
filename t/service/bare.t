@@ -2,6 +2,7 @@
 use Test::More;
 use Test::Exception;
 use Beam::Wire;
+use Test::Lib;
 
 subtest 'bare service with $ref' => sub {
     my $wire = Beam::Wire->new(
