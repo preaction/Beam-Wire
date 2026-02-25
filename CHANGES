@@ -2,6 +2,18 @@ Changelog for Beam-Wire
 
 {{ $NEXT }}
 
+  *NOTE*: The `$path` keyword is now deprecated, to be replaced by standard
+  `$ref` lookups instead.
+
+[Added]
+
+  - Bare hashrefs can now be used as implicit child containers. Thanks @XSVen
+    for the idea and the help! [Github #93][Github #94]
+
+[Fixed]
+
+  - Improved performance of service name lookups. Thanks @XSven!
+
 1.030     2026-02-04 10:51:47-06:00 America/Chicago
 
   [Added]

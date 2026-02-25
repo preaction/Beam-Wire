@@ -4,7 +4,7 @@ Beam::Wire - Lightweight Dependency Injection Container
 
 # VERSION
 
-version 1.030
+version 1.031
 
 # STATUS
 
@@ -88,7 +88,7 @@ add it here.
 ## meta\_prefix
 
 The character that begins a meta-property inside of a service's `args`. This
-includes `$ref`, `$path`, `$method`, and etc...
+includes `$ref`, `$class`, `$method`, and etc...
 
 The default value is `$`. The empty string is allowed.
 
@@ -377,7 +377,11 @@ following keys:
 
     The name of a service in the container. Required.
 
-- $path
+- $path (deprecated)
+
+    **Deprecated**: Bare hashrefs can be treated as child containers with `$ref`
+    now. If there are other uses of `$path` that cannot be updated to `$ref`,
+    please [open a GitHub issue to discuss it](https://github.com/preaction/Beam-Wire/issues).
 
     A data path to pick some data out of the reference. Useful with `value`
     and `config` services.
