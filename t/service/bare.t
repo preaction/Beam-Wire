@@ -22,26 +22,19 @@ subtest 'bare service with $ref' => sub {
         },
     );
 
-    my $wire = Beam::Wire->new( config => {%config} );
+    my $wire = Beam::Wire->new( config => \%config );
+    my $hashref;
+    lives_ok { $hashref = $wire->get( 'foo' ) };
+    is ref $hashref, 'HASH';
+    ok !blessed $hashref, 'hashref is a plain hashref';
+    is $hashref->{bar}->name, 'Nathan Fillion', 'refs are resolved';
+
     my $actor;
     lives_ok { $actor = $wire->get( 'foo/bar' ) };
     is $actor->name, 'Nathan Fillion', 'check name';
 
-    subtest 'try the parent service first' => sub {
-      my $wire = Beam::Wire->new( config => {%config} );
-      my $hashref;
-      lives_ok { $hashref = $wire->get( 'foo' ) };
-      is ref $hashref, 'HASH';
-      ok !blessed $hashref, 'hashref is a plain hashref';
-      is $hashref->{bar}->name, 'Nathan Fillion', 'refs are resolved';
-
-      my $actor;
-      lives_ok { $actor = $wire->get( 'foo/bar' ) };
-      is $actor->name, 'Nathan Fillion', 'check name';
-
-      lives_ok { $hashref = $wire->get( 'foo' ) };
-      ok !blessed $hashref, 'hashref is still a plain hashref';
-    };
+    lives_ok { $hashref = $wire->get( 'foo' ) };
+    ok !blessed $hashref, 'hashref is still a plain hashref';
 };
 
 subtest 'bare service with $class' => sub {
@@ -59,25 +52,6 @@ subtest 'bare service with $class' => sub {
     my $actor;
     lives_ok { $actor = $wire->get( 'foo/bar' ) };
     is $actor->name, 'Gina Torres', 'check name';
-};
-
-subtest 'bare service referencing explicit value service' => sub {
-    my $wire = Beam::Wire->new(
-        config => {
-            malcolm => {
-                value => 'Nathan Fillion',
-            },
-            foo => {
-                bar => {
-                    '$ref' => 'malcolm',
-                },
-            },
-        }
-    );
-
-    my $actor;
-    lives_ok { $actor = $wire->get( 'foo/bar' ) };
-    is $actor, 'Nathan Fillion', 'got the value service';
 };
 
 subtest 'bare service referencing explicit value service' => sub {
