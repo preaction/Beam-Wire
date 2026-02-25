@@ -2,6 +2,8 @@ Changelog for Beam-Wire
 
 {{ $NEXT }}
 
+1.031     2026-02-25 08:48:26-06:00 America/Chicago
+
   *NOTE*: The `$path` keyword is now deprecated, to be replaced by standard
   `$ref` lookups instead.
 
