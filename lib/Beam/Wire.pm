@@ -164,7 +164,7 @@ sub _build_services {
 =attr meta_prefix
 
 The character that begins a meta-property inside of a service's C<args>. This
-includes C<$ref>, C<$path>, C<$method>, and etc...
+includes C<$ref>, C<$class>, C<$method>, and etc...
 
 The default value is C<$>. The empty string is allowed.
 
@@ -940,7 +940,11 @@ following keys:
 
 The name of a service in the container. Required.
 
-=item $path
+=item $path (deprecated)
+
+B<Deprecated>: Bare hashrefs can be treated as child containers with C<$ref>
+now. If there are other uses of C<$path> that cannot be updated to C<$ref>,
+please L<open a GitHub issue to discuss it|https://github.com/preaction/Beam-Wire/issues>.
 
 A data path to pick some data out of the reference. Useful with C<value>
 and C<config> services.
@@ -995,6 +999,9 @@ sub resolve_ref {
     my $service = $self->get( $name );
     # resolve service ref w/path
     if ( my $path = $arg->{ $meta{path} } ) {
+        # This was not nearly as useful as I had hoped... It would be better,
+        # much better, to have $ref handle these kind of things instead.
+        _deprecated('warning: (deprecated) Using $path is deprecated to remove the dependency on Data::DPath in service "' . $for . '"' );
         # locate foreign service data
         use_module( 'Data::DPath' )->import('dpath');
         @ref = dpath( $path )->match($service);
